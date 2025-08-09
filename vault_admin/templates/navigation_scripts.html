@@ -1,0 +1,66 @@
+<!-- Navigation JavaScript -->
+<script>
+    // Sidebar functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (sidebarToggle && sidebar && sidebarOverlay) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        });
+    }
+
+    // Set active navigation item
+    function setActiveNavItem(currentPage) {
+        // Remove active class from all nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('bg-navy');
+            link.classList.add('hover:bg-navy');
+        });
+
+        // Add active class to current page nav link
+        const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+        if (activeLink) {
+            activeLink.classList.add('bg-navy');
+            activeLink.classList.remove('hover:bg-navy');
+        }
+    }
+
+    // Auto-detect current page and set active state
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        let currentPage = '';
+
+        // Map URL patterns to page identifiers
+        if (currentPath.includes('dashboard') || currentPath === '/admin/' || currentPath === '/') {
+            currentPage = 'dashboard';
+        } else if (currentPath.includes('user')) {
+            currentPage = 'users';
+        } else if (currentPath.includes('category')) {
+            currentPage = 'categories';
+        } else if (currentPath.includes('product')) {
+            currentPage = 'products';
+        } else if (currentPath.includes('order')) {
+            currentPage = 'orders';
+        } else if (currentPath.includes('coupon')) {
+            currentPage = 'coupons';
+        } else if (currentPath.includes('report')) {
+            currentPage = 'reports';
+        } else if (currentPath.includes('setting')) {
+            currentPage = 'settings';
+        }
+
+        if (currentPage) {
+            setActiveNavItem(currentPage);
+        }
+    });
+</script>
+
+        

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Success - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .success-container {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+            border: 1px solid #a7f3d0;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            animation: successPulse 2s ease-in-out infinite;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        @keyframes successPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
+            }
+        }
+
+        .success-checkmark {
+            font-size: 3rem;
+            color: white;
+            animation: checkmarkAppear 0.8s ease-out;
+        }
+
+        @keyframes checkmarkAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .order-details-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #16213e 0%, #1e293b 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            margin: 0.5rem;
+            min-width: 200px;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(22, 33, 62, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #16213e;
+            border: 2px solid #16213e;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            margin: 0.5rem;
+            min-width: 200px;
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #16213e;
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-secondary:hover::before {
+            left: 0;
+        }
+
+        .btn-secondary:hover {
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(22, 33, 62, 0.2);
+        }
+
+        .order-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .order-info-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .order-info-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-info-value {
+            font-size: 1.125rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .celebration-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            animation: confettiFall 3s linear infinite;
+        }
+
+        .confetti:nth-child(odd) {
+            background: #f59e0b;
+            animation-delay: -0.5s;
+        }
+
+        .confetti:nth-child(3n) {
+            background: #ef4444;
+            animation-delay: -1s;
+        }
+
+        .confetti:nth-child(4n) {
+            background: #8b5cf6;
+            animation-delay: -1.5s;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .success-container {
+                padding: 2rem 1rem;
+                margin: 1rem;
+            }
+            
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+            
+            .order-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#16213e] min-h-screen relative">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <!-- Celebration Animation -->
+    <div class="celebration-animation">
+        <div class="confetti" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="confetti" style="left: 20%; animation-delay: -0.3s;"></div>
+        <div class="confetti" style="left: 30%; animation-delay: -0.6s;"></div>
+        <div class="confetti" style="left: 40%; animation-delay: -0.9s;"></div>
+        <div class="confetti" style="left: 50%; animation-delay: -1.2s;"></div>
+        <div class="confetti" style="left: 60%; animation-delay: -1.5s;"></div>
+        <div class="confetti" style="left: 70%; animation-delay: -1.8s;"></div>
+        <div class="confetti" style="left: 80%; animation-delay: -2.1s;"></div>
+        <div class="confetti" style="left: 90%; animation-delay: -2.4s;"></div>
+    </div>
+
+    <div class="pt-20 min-h-screen flex items-center justify-center px-4">
+        <div class="success-container">
+            <!-- Success Icon -->
+            <div class="success-icon">
+                <i class="fas fa-check success-checkmark"></i>
+            </div>
+
+            <!-- Success Message -->
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Order Placed Successfully!</h1>
+            <p class="text-lg text-gray-600 mb-6">
+                Thank you for your purchase! Your order has been confirmed and is being processed.
+            </p>
+
+            <!-- Order Details Card -->
+            <div class="order-details-card">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Details</h2>
+                
+                <div class="order-info-grid">
+                    <div class="order-info-item">
+                        <div class="order-info-label">Order Number</div>
+                        <div class="order-info-value">#{{ order.order_number }}</div>
+                    </div>
+                    
+                    <div class="order-info-item">
+                        <div class="order-info-label">Total Amount</div>
+                        <div class="order-info-value">₹{{ order.total_amount }}</div>
+                    </div>
+                    
+                    <div class="order-info-item">
+                        <div class="order-info-label">Payment Method</div>
+                        <div class="order-info-value">{{ order.get_payment_method_display }}</div>
+                    </div>
+                    
+                    <div class="order-info-item">
+                        <div class="order-info-label">Order Status</div>
+                        <div class="order-info-value">{{ order.get_status_display }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        <p class="text-blue-700 text-sm">
+                            <strong>What's next?</strong> You will receive an email confirmation shortly. 
+                            We'll notify you when your order is shipped.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8">
+                <a href="{% url 'order_detail' order.id %}" class="btn-primary">
+                    <i class="fas fa-receipt mr-2"></i>
+                    View Order Details
+                </a>
+                
+                <a href="{% url 'product_list' %}" class="btn-secondary">
+                    <i class="fas fa-shopping-bag mr-2"></i>
+                    Continue Shopping
+                </a>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-600 mb-2">
+                    Need help? Contact our support team
+                </p>
+                <div class="flex justify-center items-center space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-phone mr-1"></i> +91 9876543210</span>
+                    <span><i class="fas fa-envelope mr-1"></i> support@azrion.com</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        // Add more confetti dynamically
+        document.addEventListener('DOMContentLoaded', function() {
+            const celebrationContainer = document.querySelector('.celebration-animation');
+            
+            // Create additional confetti pieces
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = -Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                celebrationContainer.appendChild(confetti);
+            }
+
+            // Remove confetti after animation
+            setTimeout(() => {
+                celebrationContainer.style.display = 'none';
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

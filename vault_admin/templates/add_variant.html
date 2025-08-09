@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Variant - {{ product.product_name }} | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    {% include 'nav_style.html' %}
+    <style>
+        /* Hide scrollbars */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        *::-webkit-scrollbar {
+            display: none;
+        }
+
+        html, body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #16213e;
+            border: none;
+            border-radius: 12px;
+        }
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, rgb(51, 59, 82), rgb(39, 52, 87));
+            transform: translateY(-2px);
+        }
+        .image-preview {
+            position: relative;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+        .image-preview img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        .image-preview .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .image-preview .primary-btn {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #16213e;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .image-preview .crop-btn {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: #059669;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .image-preview.primary {
+            border-color: #16213e;
+            border-width: 3px;
+        }
+        .drag-drop-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        .drag-drop-area.dragover {
+            border-color: #16213e;
+            background: #f0f9ff;
+        }
+        .drag-drop-area:hover {
+            border-color: #16213e;
+            background: #f0f9ff;
+        }
+        .color-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #e5e7eb;
+            background: white;
+        }
+        .color-option:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .color-option.selected {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        .color-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .custom-color-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #e5e7eb;
+            background: white;
+        }
+        .custom-color-option:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+        .custom-color-option.selected {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+        .custom-color-inputs {
+            margin-top: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .custom-color-inputs.hidden {
+            display: none;
+        }
+
+        /* Crop Modal Styles */
+        .crop-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .crop-modal.active {
+            display: flex;
+        }
+        .crop-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        .crop-image {
+            max-width: 100%;
+            max-height: 60vh;
+        }
+        .crop-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .crop-btn-control {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .crop-btn-primary {
+            background: #16213e;
+            color: white;
+        }
+        .crop-btn-primary:hover {
+            background: #1e293b;
+        }
+        .crop-btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .crop-btn-secondary:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Crop Modal -->
+    <div class="crop-modal" id="cropModal">
+        <div class="crop-container">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Crop Image</h3>
+            <div class="crop-image-container">
+                <img id="cropImage" class="crop-image" src="/placeholder.svg" alt="Crop">
+            </div>
+            <div class="crop-controls">
+                <button type="button" class="crop-btn-control crop-btn-secondary" onclick="resetCrop()">
+                    <i class="fas fa-undo mr-2"></i>Reset
+                </button>
+                <button type="button" class="crop-btn-control crop-btn-primary" onclick="applyCrop()">
+                    <i class="fas fa-check mr-2"></i>Apply Crop
+                </button>
+                <button type="button" class="crop-btn-control crop-btn-secondary" onclick="closeCropModal()">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Messages Display -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Add Color Variant</h2>
+                    <p class="text-gray-600">{{ product.product_name }} - Add a new color variant</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="{% url 'product_variants' product.id %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Variants
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Variant Form -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <form method="post" enctype="multipart/form-data" id="variantForm">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Product Info -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Product Information</h3>
+                            <div class="flex items-center gap-4">
+                                {% if product.main_image %}
+                                    <img src="{{ product.main_image.url }}" alt="{{ product.product_name }}" class="w-16 h-16 object-cover rounded-lg border-2 border-gray-200">
+                                {% else %}
+                                    <div class="w-16 h-16 bg-gray-200 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">{{ product.product_name }}</h4>
+                                    <p class="text-sm text-gray-600">{{ product.category.name }}</p>
+                                    <p class="text-sm font-medium text-gray-900">₹{{ product.price }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Color Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-4">
+                                <i class="fas fa-palette mr-2"></i>Select Color *
+                            </label>
+                            <!-- Predefined Colors -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3">Predefined Colors</h4>
+                                <div class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+                                    <div class="color-option" data-color="orange" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #f97316;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Orange</span>
+                                    </div>
+                                    <div class="color-option" data-color="purple" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #8b5cf6;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Purple</span>
+                                    </div>
+                                    <div class="color-option" data-color="pink" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #ec4899;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Pink</span>
+                                    </div>
+                                    <div class="color-option" data-color="brown" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #92400e;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Brown</span>
+                                    </div>
+                                    <div class="color-option" data-color="gray" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #6b7280;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Gray</span>
+                                    </div>
+                                    <div class="color-option" data-color="navy" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #1e40af;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Navy</span>
+                                    </div>
+                                    <div class="color-option" data-color="gold" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #d97706;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Gold</span>
+                                    </div>
+                                    <div class="color-option" data-color="silver" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #9ca3af;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Silver</span>
+                                    </div>
+                                    <div class="color-option" data-color="rose_gold" data-type="predefined">
+                                        <div class="color-circle" style="background-color: #f472b6;"></div>
+                                        <span class="text-sm font-medium text-gray-700">Rose Gold</span>
+                                    </div>
+                                    <!-- Custom Color Option -->
+                                    <div class="custom-color-option" data-type="custom" id="customColorOption">
+                                        <div class="color-circle" style="background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);"></div>
+                                        <span class="text-sm font-medium text-gray-700">Custom Color</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Color Inputs -->
+                            <div class="custom-color-inputs hidden" id="customColorInputs">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3">Enter Custom Color</h4>
+                                <div class="flex gap-3">
+                                    <div class="flex-1">
+                                        <input type="text" id="color_code" name="color_code" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                               placeholder="#FF0000">
+                                        <p class="text-xs text-gray-500 mt-1">Enter hex color code (e.g., #FF0000)</p>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <input type="color" id="color_picker" class="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer" value="#FF0000">
+                                        <p class="text-xs text-gray-500 mt-1">Color Picker</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden inputs for form submission -->
+                            <input type="input" name="color" id="selectedColor" value="">
+                            <input type="input" name="color_type" id="selectedColorType" value="">
+                            <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p class="text-sm text-blue-800">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Choose from predefined colors for quick selection or select "Custom Color" to enter your own hex code.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Stock Quantity -->
+                        <div>
+                            <label for="stock_quantity" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-boxes mr-2"></i>Stock Quantity *
+                            </label>
+                            <input type="number" id="stock_quantity" name="stock_quantity" required min="0" max="9999"
+                                   value="0"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                   placeholder="Enter stock quantity">
+                            <p class="text-sm text-gray-500 mt-1">Number of items available for this color variant</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Variant Images -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-images mr-2"></i>Variant Images * (Minimum 3 images)
+                            </label>
+                            <!-- Drag and Drop Area -->
+                            <div class="drag-drop-area" id="dragDropArea">
+                                <div class="text-center">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg font-medium text-gray-700 mb-2">Drag & Drop Images Here</p>
+                                    <p class="text-sm text-gray-500 mb-4">or click to browse</p>
+                                    <input type="file" id="images" name="images" multiple accept="image/*" required
+                                           class="hidden">
+                                    <button type="button" onclick="document.getElementById('images').click()"
+                                            class="bg-navy hover:bg-navy-dark text-white font-semibold px-6 py-2 rounded-lg transition-all">
+                                        <i class="fas fa-plus mr-2"></i>Choose Images
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Image Preview Area -->
+                            <div id="imagePreview" class="mt-4 flex flex-wrap"></div>
+                        </div>
+
+                        <!-- Image Requirements -->
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-medium text-blue-800 mb-2">Image Requirements:</h4>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li><i class="fas fa-check mr-2"></i>Minimum 3 images required</li>
+                                <li><i class="fas fa-check mr-2"></i>Maximum 10 images allowed</li>
+                                <li><i class="fas fa-check mr-2"></i>Supported formats: JPG, PNG, GIF</li>
+                                <li><i class="fas fa-check mr-2"></i>Maximum file size: 10MB per image</li>
+                                <li><i class="fas fa-check mr-2"></i>First image will be set as primary</li>
+                                <li><i class="fas fa-check mr-2"></i>Click crop icon to manually adjust images</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
+                    <button type="submit" class="btn-primaryy px-8 py-3 text-white font-semibold flex-1 md:flex-none">
+                        <i class="fas fa-save mr-2"></i>Add Variant
+                    </button>
+                    <a href="{% url 'product_variants' product.id %}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-8 py-3 rounded-lg transition-all text-center">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+
+    <script>
+        // Cropping variables
+        let cropper = null;
+        let currentImageFile = null;
+        let currentImageIndex = null;
+        let selectedFiles = [];
+        let primaryImageIndex = 0;
+
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="products"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 5000);
+            });
+
+            // Initialize color selection
+            initializeColorSelection();
+        });
+
+        // Color selection functionality
+        function initializeColorSelection() {
+            const predefinedColors = document.querySelectorAll('.color-option');
+            const customColorOption = document.getElementById('customColorOption');
+            const customColorInputs = document.getElementById('customColorInputs');
+            const colorCodeInput = document.getElementById('color_code');
+            const colorPicker = document.getElementById('color_picker');
+            const selectedColorInput = document.getElementById('selectedColor');
+            const selectedColorTypeInput = document.getElementById('selectedColorType');
+
+            // Handle predefined color selection
+            predefinedColors.forEach(option => {
+                option.addEventListener('click', function() {
+                    const colorValue = this.getAttribute('data-color');
+                    const isSelected = this.classList.contains('selected');
+                    if (isSelected) {
+                        // Deselect if already selected
+                        this.classList.remove('selected');
+                        selectedColorInput.value = '';
+                        selectedColorTypeInput.value = '';
+                    } else {
+                        // Clear all selections first
+                        clearAllSelections();
+                        // Select this color
+                        this.classList.add('selected');
+                        selectedColorInput.value = colorValue;
+                        selectedColorTypeInput.value = 'predefined';
+                    }
+                });
+            });
+
+            // Handle custom color selection
+            customColorOption.addEventListener('click', function() {
+                const isSelected = this.classList.contains('selected');
+                if (isSelected) {
+                    // Deselect custom color
+                    this.classList.remove('selected');
+                    customColorInputs.classList.add('hidden');
+                    selectedColorInput.value = '';
+                    selectedColorTypeInput.value = '';
+                    colorCodeInput.value = '';
+                    colorPicker.value = '#FF0000';
+                } else {
+                    // Clear all selections first
+                    clearAllSelections();
+                    // Select custom color
+                    this.classList.add('selected');
+                    customColorInputs.classList.remove('hidden');
+                    selectedColorTypeInput.value = 'custom';
+                    colorCodeInput.focus();
+                }
+            });
+
+            // Handle color picker change
+            colorPicker.addEventListener('input', function() {
+                if (customColorOption.classList.contains('selected')) {
+                    colorCodeInput.value = this.value.toUpperCase();
+                    selectedColorInput.value = this.value.toUpperCase();
+                }
+            });
+
+            // Handle custom color input
+            colorCodeInput.addEventListener('input', function() {
+                const hexValue = this.value.trim();
+                if (customColorOption.classList.contains('selected')) {
+                    selectedColorInput.value = hexValue;
+                    // Update color picker if valid hex
+                    if (/^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
+                        colorPicker.value = hexValue;
+                    }
+                }
+            });
+
+            function clearAllSelections() {
+                // Clear predefined color selections
+                predefinedColors.forEach(opt => opt.classList.remove('selected'));
+                // Clear custom color selection
+                customColorOption.classList.remove('selected');
+                customColorInputs.classList.add('hidden');
+                // Clear form values
+                selectedColorInput.value = '';
+                selectedColorTypeInput.value = '';
+                colorCodeInput.value = '';
+                colorPicker.value = '#FF0000';
+            }
+        }
+
+        // Image handling
+        const imageInput = document.getElementById('images');
+        const imagePreview = document.getElementById('imagePreview');
+        const dragDropArea = document.getElementById('dragDropArea');
+
+        // Handle file input change
+        imageInput.addEventListener('change', function(e) {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop functionality
+        dragDropArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    selectedFiles.push(file);
+                }
+            }
+            updateImagePreview();
+            updateFileInput();
+        }
+
+        function updateImagePreview() {
+            imagePreview.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = `image-preview ${index === primaryImageIndex ? 'primary' : ''}`;
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="remove-btn" onclick="removeImage(${index})">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="crop-btn" onclick="openCropModal('${e.target.result}', 'variant', ${index})" title="Crop Image">
+                            <i class="fas fa-crop"></i>
+                        </div>
+                        <div class="primary-btn" onclick="setPrimary(${index})">
+                            ${index === primaryImageIndex ? 'Primary' : 'Set Primary'}
+                        </div>
+                    `;
+                    imagePreview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            if (primaryImageIndex >= selectedFiles.length) {
+                primaryImageIndex = Math.max(0, selectedFiles.length - 1);
+            }
+            updateImagePreview();
+            updateFileInput();
+        }
+
+        function setPrimary(index) {
+            primaryImageIndex = index;
+            updateImagePreview();
+        }
+
+        function updateFileInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
+        }
+
+        // Crop Modal Functions
+        function openCropModal(imageSrc, type, index = null) {
+            currentImageIndex = index;
+            const cropModal = document.getElementById('cropModal');
+            const cropImage = document.getElementById('cropImage');
+            
+            cropImage.src = imageSrc;
+            cropModal.classList.add('active');
+            
+            // Initialize cropper after image loads
+            cropImage.onload = function() {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 4/3,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+            };
+        }
+
+        function closeCropModal() {
+            const cropModal = document.getElementById('cropModal');
+            cropModal.classList.remove('active');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        function resetCrop() {
+            if (cropper) {
+                cropper.reset();
+            }
+        }
+
+        function applyCrop() {
+            if (cropper && currentImageIndex !== null) {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 800,
+                    height: 600,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high',
+                });
+                
+                canvas.toBlob(function(blob) {
+                    // Create new file from cropped image
+                    const originalFile = selectedFiles[currentImageIndex];
+                    const croppedFile = new File([blob], originalFile.name, {
+                        type: originalFile.type,
+                        lastModified: Date.now()
+                    });
+                    
+                    // Replace the file in selectedFiles array
+                    selectedFiles[currentImageIndex] = croppedFile;
+                    
+                    // Update file input and preview
+                    updateFileInput();
+                    updateImagePreview();
+                    
+                    closeCropModal();
+                }, selectedFiles[currentImageIndex].type, 0.9);
+            }
+        }
+
+        // Form validation
+        document.getElementById('variantForm').addEventListener('submit', function(e) {
+            const selectedColor = document.getElementById('selectedColor').value;
+            const selectedColorType = document.getElementById('selectedColorType').value;
+            const colorCodeInput = document.getElementById('color_code');
+
+            // Check color selection
+            let colorValid = false;
+            let colorErrorMessage = '';
+            if (selectedColorType === 'predefined' && selectedColor) {
+                colorValid = true;
+            } else if (selectedColorType === 'custom') {
+                const hexValue = colorCodeInput.value.trim();
+                if (!hexValue) {
+                    colorErrorMessage = 'Please enter a hex color code for custom color.';
+                } else {
+                    // Validate hex color format
+                    const hexPattern = /^#[0-9A-Fa-f]{6}$/;
+                    if (hexPattern.test(hexValue)) {
+                        colorValid = true;
+                    } else {
+                        colorErrorMessage = 'Please enter a valid hex color code (e.g., #FF0000).';
+                    }
+                }
+            } else {
+                colorErrorMessage = 'Please select a color option.';
+            }
+
+            if (!colorValid) {
+                e.preventDefault();
+                showErrorMessage(colorErrorMessage);
+                return false;
+            }
+
+            // Check image selection
+            if (selectedFiles.length < 3) {
+                e.preventDefault();
+                showErrorMessage('Please upload at least 3 images for the variant.');
+                return false;
+            }
+
+            if (selectedFiles.length > 10) {
+                e.preventDefault();
+                showErrorMessage('Maximum 10 images are allowed per variant.');
+                return false;
+            }
+
+            // Check stock quantity
+            const stockQuantityInput = document.getElementById('stock_quantity');
+            const stockQuantity = parseInt(stockQuantityInput.value, 10);
+            if (isNaN(stockQuantity) || stockQuantity < 0 || stockQuantity > 9999) {
+                e.preventDefault();
+                showErrorMessage('Please enter a valid stock quantity between 0 and 9999.');
+                return false;
+            }
+        });
+
+        // Show error message function
+        function showErrorMessage(message) {
+            // Remove existing error messages
+            const existingErrors = document.querySelectorAll('.error-message');
+            existingErrors.forEach(error => error.remove());
+
+            // Create new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message fixed top-20 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50 max-w-md';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

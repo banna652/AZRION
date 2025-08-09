@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.product_name }} | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+    <style>
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #16213e;
+            border: none;
+            border-radius: 12px;
+        }
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, rgb(51, 59, 82), rgb(39, 52, 87));
+            transform: translateY(-2px);
+        }
+        .sticky-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+        }
+        .sticky-sidebar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            height: calc(100vh - 64px);
+            z-index: 30;
+        }
+        .main-content-with-nav {
+            margin-top: 64px;
+        }
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .gallery-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .gallery-image:hover {
+            transform: scale(1.05);
+            border-color: #16213e;
+        }
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-content {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        .variant-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .variant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #16213e;
+        }
+        .color-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+            display: inline-block;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Product Details</h2>
+                    <p class="text-gray-600">View complete product information</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex gap-3">
+                    <a href="{% url 'product_variants' product.id %}">
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                            <i class="fas fa-palette mr-2"></i>Manage Variants
+                        </button>
+                    </a>
+                    <a href="{% url 'edit_product' product.id %}">
+                        <button class="btn-primaryy px-6 py-3 text-white font-semibold">
+                            <i class="fas fa-edit mr-2"></i>Edit Product
+                        </button>
+                    </a>
+                    <a href="{% url 'product_list' %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Products
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details Card -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column - Product Info -->
+                    <div class="space-y-6">
+                        <!-- Basic Info -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-2xl font-bold text-gray-900">{{ product.product_name }}</h3>
+                                {% if not product.is_deleted %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Active
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                        <i class="fas fa-times-circle mr-1"></i>Inactive
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <!-- Category -->
+                            <div class="mb-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-tags mr-1"></i>{{ product.category.name }}
+                                </span>
+                            </div>
+                            <!-- Price and Offer -->
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="text-3xl font-bold text-gray-900">₹{{ product.price }}</div>
+                                {% if product.product_offer > 0 %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                                        <i class="fas fa-percent mr-1"></i>{{ product.product_offer }}% OFF
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">
+                                <i class="fas fa-align-left mr-2"></i>Description
+                            </h4>
+                            {% if product.product_description %}
+                                <p class="text-gray-700 leading-relaxed">{{ product.product_description }}</p>
+                            {% else %}
+                                <p class="text-gray-500 italic">No description provided</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Product Stats -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-purple-600">{{ variants.count }}</div>
+                                <div class="text-sm text-gray-600">Color Variant{{ variants.count|pluralize }}</div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                <div class="text-2xl font-bold text-green-600">
+                                    {% if product.product_offer > 0 %}
+                                        ₹{% widthratio product.price 100 product.product_offer %}
+                                    {% else %}
+                                        ₹0
+                                    {% endif %}
+                                </div>
+                                <div class="text-sm text-gray-600">Discount</div>
+                            </div>
+                        </div>
+
+                        <!-- Timestamps -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-600">Created:</span>
+                                    <div class="font-medium text-gray-900">{{ product.created_at|date:"M d, Y" }}</div>
+                                    <div class="text-xs text-gray-500">{{ product.created_at|date:"g:i A" }}</div>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Last Updated:</span>
+                                    <div class="font-medium text-gray-900">{{ product.updated_at|date:"M d, Y" }}</div>
+                                    <div class="text-xs text-gray-500">{{ product.updated_at|date:"g:i A" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Main Image and Variants -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-image mr-2"></i>Main Product Image
+                        </h4>
+                        {% if product.main_image %}
+                            <div class="mb-6">
+                                <img src="{{ product.main_image.url }}" alt="{{ product.product_name }}" 
+                                     class="w-full max-w-md h-64 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
+                                     onclick="openImageModal('{{ product.main_image.url }}')">
+                            </div>
+                        {% else %}
+                            <div class="mb-6 w-full max-w-md h-64 bg-gray-200 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-image text-6xl text-gray-300 mb-4"></i>
+                                    <p class="text-gray-500">No main image</p>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Variants Section -->
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-palette mr-2"></i>Color Variants ({{ variants.count }})
+                        </h4>
+                        {% if variants.exists %}
+                            <div class="space-y-4">
+                                {% for variant in variants %}
+                                    <div class="variant-card border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center">
+                                                {% if variant.color_code %}
+                                                    <div class="color-circle" style="background-color: {{ variant.color_code }};"></div>
+                                                {% else %}
+                                                    <div class="color-circle bg-gray-300"></div>
+                                                {% endif %}
+                                                <span class="font-medium">{{ variant.get_color_display }}</span>
+                                            </div>
+                                            <span class="text-sm text-gray-500">{{ variant.get_image_count }} image{{ variant.get_image_count|pluralize }}</span>
+                                        </div>
+                                        {% if variant.images.exists %}
+                                            <div class="grid grid-cols-4 gap-2">
+                                                {% for image in variant.images.all|slice:":4" %}
+                                                    <img src="{{ image.image.url }}" alt="{{ variant.get_color_display }}" 
+                                                         class="w-16 h-16 object-cover rounded border cursor-pointer {% if image.is_primary %}border-2 border-blue-500{% endif %}"
+                                                         onclick="openImageModal('{{ image.image.url }}')">
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-4">
+                                <a href="{% url 'product_variants' product.id %}" class="text-blue-600 hover:underline">
+                                    <i class="fas fa-palette mr-1"></i>Manage all variants
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
+                                <i class="fas fa-palette text-4xl text-gray-300 mb-4"></i>
+                                <p class="text-lg">No color variants added</p>
+                                <a href="{% url 'product_variants' product.id %}" class="text-blue-600 hover:underline mt-2 inline-block">
+                                    Add color variants
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'product_variants' product.id %}">
+                <button class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                    <i class="fas fa-palette mr-2"></i>Manage Variants
+                </button>
+            </a>
+            <a href="{% url 'edit_product' product.id %}">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                    <i class="fas fa-edit mr-2"></i>Edit Product
+                </button>
+            </a>
+            <a href="{% url 'toggle_product_status' product.id %}">
+                {% if not product.is_deleted %}
+                    <button class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                        <i class="fas fa-times-circle mr-2"></i>Deactivate Product
+                    </button>
+                {% else %}
+                    <button class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                        <i class="fas fa-check-circle mr-2"></i>Activate Product
+                    </button>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 modal-overlay hidden z-50" onclick="closeImageModal()">
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="relative max-w-4xl max-h-full">
+                <img id="modalImage" src="/placeholder.svg" alt="Product Image" class="max-w-full max-h-full object-contain rounded-lg">
+                <button onclick="closeImageModal()" class="absolute top-4 right-4 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+
+    <script>
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="products"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+        });
+
+        // Image modal functions
+        function openImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageSrc;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+    </script>
+</body>
+</html>

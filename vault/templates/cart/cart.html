@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Hide scrollbars */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        *::-webkit-scrollbar {
+            display: none;
+        }
+        html, body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none;
+        }
+        .cart-container {
+            background: #f0f2f5; /* Lighter, softer background */
+            border-radius: 16px; /* Slightly smaller radius */
+            padding: 20px; /* Reduced padding */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* Softer shadow */
+            border: 1px solid #e0e2e6; /* Subtle border */
+        }
+        .cart-item-card {
+            background: #acade0ff;
+            border-radius: 15px; /* Further reduced radius */
+            padding: 10px; /* Further reduced padding */
+            margin-bottom: 8px; /* Further reduced margin */
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03); /* Even lighter shadow */
+            border: 1px solid #f8f8f8; /* Very light border */
+            transition: all 0.2s ease-in-out;
+        }
+        .cart-item-card:hover {
+            transform: translateY(3px); /* Reduced hover lift */
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05); /* Softer hover shadow */
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #16213e 0%, #1e293b 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(22, 33, 62, 0.3);
+        }
+        .btn-secondary {
+            border: 2px solid #16213e;
+            color: #16213e;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #16213e;
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        .btn-secondary:hover::before {
+            left: 0;
+        }
+        .btn-secondary:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(22, 33, 62, 0.2);
+        }
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px; /* Further reduced radius */
+            overflow: hidden;
+            width: fit-content;
+        }
+        .quantity-btn {
+            background: #f9fafb;
+            border: none;
+            padding: 4px 7px; /* Further reduced padding */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            color: #16213e;
+        }
+        .quantity-btn:hover:not(:disabled) {
+            background: #16213e;
+            color: white;
+        }
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .quantity-input {
+            border: none;
+            padding: 4px 5px; /* Further reduced padding */
+            text-align: center;
+            width: 35px; /* Further reduced width */
+            font-weight: 600;
+            background: white;
+            color: #16213e;
+            font-size: 0.75rem; /* text-xs */
+        }
+        .price-tag {
+            background: linear-gradient(135deg, #16213e, #1e293b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .breadcrumb {
+            background: linear-gradient(135deg, #e2e8f021, #e2e8f021);
+            padding: 10px 16px; /* Reduced padding */
+            border-radius: 10px; /* Reduced radius */
+            border: 1px solid rgba(22, 33, 62, 0.1);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #16213e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 18px; /* Reduced padding */
+            border-radius: 6px; /* Reduced radius */
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            font-size: 0.875rem; /* text-sm */
+        }
+        .toast.success {
+            background: #10b981;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        @keyframes slideIn {
+            from {transform: translateX(100%);opacity: 0;}
+            to {transform: translateX(0);opacity: 1;}
+        }
+        .empty-cart-illustration {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 16px;
+            padding: 40px 30px; /* Reduced padding */
+            text-align: center;
+        }
+        .unavailable-item {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            opacity: 0.7;
+        }
+        /* Custom confirmation styles for remove/clear buttons */
+        .confirmation-dialog {
+            background: #fff;
+            border: 1px solid #e0e2e6; /* Lighter border */
+            border-radius: 8px;
+            padding: 8px; /* Reduced padding */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Softer shadow */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px; /* Reduced gap */
+            position: absolute; /* Default to absolute for consistency */
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            min-width: 120px; /* Reduced min-width */
+        }
+        .confirmation-dialog p {
+            font-size: 0.75rem; /* text-xs */
+            color: #4b5563; /* gray-700 */
+            font-weight: 500;
+            margin-bottom: 4px; /* Added margin */
+        }
+        .confirmation-dialog .buttons {
+            display: flex;
+            gap: 6px; /* Reduced gap */
+        }
+        .confirmation-dialog .buttons button {
+            padding: 4px 10px; /* Reduced padding */
+            border-radius: 5px; /* Slightly smaller radius */
+            font-size: 0.6875rem; /* Even smaller font size */
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .confirmation-dialog .buttons .confirm-yes {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border: none;
+        }
+        .confirmation-dialog .buttons .confirm-yes:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+        .confirmation-dialog .buttons .confirm-no {
+            background-color: #e5e7eb; /* gray-200 */
+            color: #374151; /* gray-800 */
+            border: 1px solid #d1d5db; /* gray-300 */
+        }
+        .confirmation-dialog .buttons .confirm-no:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        /* Styles for the new remove/clear buttons */
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px; /* Further adjusted padding */
+            font-size: 0.6875rem; /* Even smaller text */
+            font-weight: 600;
+            border-radius: 4px; /* Further smaller radius */
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative; /* For positioning confirmation dialog */
+            z-index: 1; /* Ensure button is above dialog when dialog is removed */
+        }
+        .action-button.remove {
+            background-color: #fee2e2; /* red-100 */
+            color: #dc2626; /* red-600 */
+            border: 1px solid #fca5a5; /* red-300 */
+        }
+        .action-button.remove:hover {
+            background-color: #fecaca; /* red-200 */
+            color: #b91c1c; /* red-700 */
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        .action-button.clear {
+            background-color: #fee2e2; /* red-100 */
+            color: #dc2626; /* red-600 */
+            border: 1px solid #fca5a5; /* red-300 */
+        }
+        .action-button.clear:hover {
+            background-color: #fecaca; /* red-200 */
+            color: #b91c1c; /* red-700 */
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        /* New style for View button */
+        .action-button.view {
+            background-color: #3e67d81f; /* light blue-100 */
+            color: #16213e; /* blue-600 */
+            border: 1px solid #16213e; /* blue-300 */
+        }
+        .action-button.view:hover {
+            background-color: #2644975b; /* blue-200 */
+            color: #0f1831ff; /* blue-700 */
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .cart-item-card .flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px; /* Further reduced gap */
+            }
+            .cart-item-card .flex-shrink-0 {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            .cart-item-card .flex-1 {
+                width: 100%;
+                text-align: center;
+            }
+            .cart-item-card .flex-1 h3 {
+                font-size: 0.875rem; /* text-sm */
+            }
+            .cart-item-card .flex-1 p {
+                font-size: 0.625rem; /* Even smaller text */
+            }
+            .cart-item-card .flex-1 .price-tag {
+                font-size: 0.9375rem; /* Smaller text */
+            }
+            .cart-item-card .flex.items-center.space-x-4 {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px; /* Further reduced gap */
+            }
+            .cart-item-card .text-right {
+                width: 100%;
+                text-align: center;
+                margin-top: 4px; /* Further reduced margin */
+            }
+            .cart-container h1 {
+                font-size: 1.5rem; /* Smaller heading */
+            }
+            .cart-container .flex.justify-between.items-center {
+                flex-direction: column;
+                gap: 10px; /* Reduced gap */
+            }
+            .cart-container .btn-primary, .cart-container #clear-cart-btn {
+                width: 100%;
+                text-align: center;
+            }
+            .empty-cart-illustration i {
+                font-size: 3.5rem; /* Smaller icon */
+            }
+            .empty-cart-illustration h2 {
+                font-size: 1.125rem; /* Smaller heading */
+            }
+            .empty-cart-illustration p {
+                font-size: 0.75rem; /* text-xs */
+            }
+            .confirmation-dialog {
+                position: static; /* Remove absolute positioning for mobile */
+                transform: none;
+                margin-top: 6px; /* Further reduced margin */
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#16213e]"> <!-- Changed body background to a very light gray -->
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>Processing...</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Breadcrumb -->
+            <nav class="mb-5"> <!-- Reduced mb -->
+                <div class="breadcrumb">
+                    <ol class="flex items-center space-x-1 text-xs text-gray-400">
+                        <li><a href="{% url 'home' %}" class="hover:text-gray-300 font-medium">Home</a></li>
+                        <li><i class="fas fa-chevron-right text-xs"></i></li>
+                        <li class="text-gray-300 font-semibold">Shopping Cart</li>
+                    </ol>
+                </div>
+            </nav>
+
+            <div class="cart-container bg-gray-300 shadow-lg shadow-black">
+                <div class="flex items-center justify-between mb-5"> <!-- Reduced mb -->
+                    <h1 class="text-xl font-bold text-gray-900">Shopping Cart</h1> <!-- Reduced heading size -->
+                    <a href="{% url 'products_list' %}" class="text-[#16213e] hover:text-[#1e293b] flex items-center font-medium text-xs"> <!-- Reduced font size -->
+                        <i class="fas fa-arrow-left mr-1"></i> <!-- Reduced mr -->
+                        Continue Shopping
+                    </a>
+                </div>
+
+                {% if available_items %}
+                    <!-- Available Items -->
+                    <div class="space-y-1.5 mb-4" id="cart-items"> <!-- Further reduced space-y and mb -->
+                        {% for item in available_items %}
+                            <div class="cart-item-card bg-gray-100 shadow-lg shadow-gray-400 relative" data-item-id="{{ item.id }}"> {# Added relative for positioning confirmation dialog #}
+                                <div class="flex items-center space-x-2"> <!-- Further reduced space-x -->
+                                    <div class="flex-shrink-0">
+                                        {% if item.variant.images.first %}
+                                            <img src="{{ item.variant.images.first.image.url }}" alt="{{ item.product.product_name }}" class="w-14 h-14 object-cover rounded-lg"> <!-- Further reduced image size -->
+                                        {% elif item.product.get_main_image %}
+                                            <img src="{{ item.product.get_main_image.url }}" alt="{{ item.product.product_name }}" class="w-14 h-14 object-cover rounded-lg">
+                                        {% else %}
+                                            <div class="w-14 h-14 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-image text-gray-400 text-base"></i> <!-- Further reduced icon size -->
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-xs font-bold text-gray-900 mb-0.5">{{ item.product.product_name }}</h3> <!-- Further reduced font size -->
+                                        <p class="text-[0.6875rem] text-gray-600 mb-0.5">Color: {{ item.variant.get_color_display }}</p> <!-- Further reduced font size -->
+                                        <p class="text-[0.6875rem] text-gray-600 mb-1">Stock: {{ item.variant.stock_quantity }} available</p> <!-- Further reduced font size -->
+                                        <p class="text-sm font-bold price-tag">₹<span class="item-price">{{ item.unit_price }}</span></p> <!-- Further reduced font size -->
+                                        <a href="{% url 'products_details' product_id=item.product.id %}" class="action-button view mt-0.5"> <!-- Further reduced mt -->
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </a>
+                                    </div>
+                                    <div class="flex items-center space-x-1.5"> <!-- Further reduced space-x -->
+                                        <div class="quantity-selector">
+                                            <button type="button" class="quantity-btn decrease-btn" data-action="decrease" data-item-id="{{ item.id }}">
+                                                <i class="fas fa-minus text-xs"></i> <!-- Reduced icon size -->
+                                            </button>
+                                            <input type="number" class="quantity-input quantity-display" value="{{ item.quantity }}" readonly>
+                                            <button type="button" class="quantity-btn increase-btn" data-action="increase" data-item-id="{{ item.id }}">
+                                                <i class="fas fa-plus text-xs"></i> <!-- Reduced icon size -->
+                                            </button>
+                                        </div>
+                                        <div class="text-right relative"> {# Added relative for confirmation dialog positioning #}
+                                            <p class="text-sm font-bold price-tag mb-0.5">₹<span class="item-total">{{ item.total_price }}</span></p> <!-- Further reduced font size -->
+                                            <button type="button" class="remove-btn action-button remove" data-item-id="{{ item.id }}">
+                                                <i class="fas fa-trash mr-1"></i>Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="bg-[#16213e] rounded-lg p-3.5"> <!-- Further reduced padding -->
+                        <div class="flex justify-between items-center mb-3.5"> <!-- Further reduced mb -->
+                            <div>
+                                <p class="text-gray-300 text-xs">Total Items: <span id="total-items" class="font-bold text-white">{{ total_items }}</span></p> <!-- Further reduced font size -->
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-white">Total: ₹<span id="cart-total">{{ total_price }}</span></p> <!-- Further reduced font size -->
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center relative"> {# Added relative for clear cart confirmation dialog #}
+                            <button type="button" id="clear-cart-btn" class="action-button clear">
+                                <i class="fas fa-trash mr-1.5"></i>Clear Cart
+                            </button>
+                            <a href="{% url 'checkout' %}" class="btn-primary px-4 py-2 text-white rounded-lg font-semibold text-sm"> <!-- Further reduced padding and font size -->
+                                Proceed to Checkout
+                                <i class="fas fa-arrow-right ml-1.5"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Empty Cart -->
+                    <div class="empty-cart-illustration">
+                        <i class="fas fa-shopping-cart text-5xl text-gray-300 mb-3"></i> <!-- Further reduced icon size -->
+                        <h2 class="text-base font-bold text-gray-600 mb-1.5">Your cart is empty</h2> <!-- Further reduced font size -->
+                        <p class="text-gray-500 mb-4 text-xs">Add some products to your cart to see them here.</p> <!-- Further reduced font size -->
+                        <a href="{% url 'product_list' %}" class="btn-primary px-4 py-2 text-white rounded-lg font-semibold text-sm inline-block"> <!-- Further reduced padding and font size -->
+                            Start Shopping
+                            <i class="fas fa-shopping-bag ml-1.5"></i>
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- Unavailable Items -->
+                {% if unavailable_items %}
+                    <div class="mt-4 border-t pt-3"> <!-- Further reduced mt and pt -->
+                        <h3 class="text-base font-bold text-gray-900 mb-1.5">Unavailable Items</h3> <!-- Further reduced font size -->
+                        <div class="space-y-1.5"> <!-- Further reduced space-y -->
+                            {% for item in unavailable_items %}
+                                <div class="cart-item-card unavailable-item relative" data-item-id="{{ item.id }}"> {# Added relative #}
+                                    <div class="flex items-center space-x-2"> <!-- Further reduced space-x -->
+                                        <div class="flex-shrink-0">
+                                            {% if item.variant.images.first %}
+                                                <img src="{{ item.variant.images.first.image.url }}" alt="{{ item.product.product_name }}" class="w-12 h-12 object-cover rounded-lg opacity-60"> <!-- Further reduced image size -->
+                                            {% elif item.product.get_main_image %}
+                                                <img src="{{ item.product.get_main_image.url }}" alt="{{ item.product.product_name }}" class="w-12 h-12 object-cover rounded-lg opacity-60">
+                                            {% else %}
+                                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center opacity-60">
+                                                    <i class="fas fa-image text-gray-400 text-sm"></i> <!-- Further reduced icon size -->
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-gray-700 text-xs">{{ item.product.product_name }}</h4> <!-- Further reduced font size -->
+                                            <p class="text-[0.625rem] text-gray-600">Color: {{ item.variant.get_color_display }}</p> <!-- Further reduced font size -->
+                                            <p class="text-[0.625rem] text-red-600 font-medium"> <!-- Further reduced font size -->
+                                                {% if item.product.is_deleted %}
+                                                    Product no longer available
+                                                {% elif item.product.category.is_deleted %}
+                                                    Category no longer available
+                                                {% elif not item.variant.is_active %}
+                                                    Variant no longer available
+                                                {% else %}
+                                                    Out of stock
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <button type="button" class="remove-btn action-button remove" data-item-id="{{ item.id }}">
+                                            <i class="fas fa-trash mr-1"></i>Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        // #Ajax - Cart functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            function showLoading() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            function hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            let activeConfirmation = null; // To track the currently active inline confirmation dialog
+
+            function dismissActiveConfirmation() {
+                if (activeConfirmation) {
+                    activeConfirmation.dialog.remove();
+                    activeConfirmation.originalButton.style.display = 'inline-flex'; // Show original button
+                    activeConfirmation = null;
+                }
+            }
+
+            // #Ajax - Update quantity
+            document.querySelectorAll('.quantity-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    dismissActiveConfirmation(); // Dismiss any active inline confirmation
+                    const action = this.dataset.action;
+                    const itemId = this.dataset.itemId;
+                    showLoading();
+
+                    fetch('{% url "update_cart_quantity" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            cart_item_id: itemId,
+                            action: action
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        hideLoading();
+                        if (data.success) {
+                            const cartItem = document.querySelector(`[data-item-id="${itemId}"]`);
+                            cartItem.querySelector('.quantity-display').value = data.quantity;
+                            cartItem.querySelector('.item-total').textContent = data.item_total;
+                            document.getElementById('cart-total').textContent = data.cart_total;
+                            document.getElementById('total-items').textContent = data.cart_items_count;
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        showToast('An error occurred. Please try again.', 'error');
+                    });
+                });
+            });
+
+            // #Ajax - Remove item (with custom confirmation)
+            document.querySelectorAll('.remove-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    dismissActiveConfirmation(); // Dismiss any active inline confirmation before showing a new one
+                    const itemId = this.dataset.itemId;
+                    const originalButton = this;
+                    const parentRightDiv = originalButton.closest('.text-right'); // Find the closest parent for positioning
+
+                    // Hide the original button
+                    originalButton.style.display = 'none';
+
+                    // Create confirmation dialog
+                    const confirmationDialog = document.createElement('div');
+                    confirmationDialog.className = 'confirmation-dialog';
+                    confirmationDialog.innerHTML = `
+                        <p>Sure?</p>
+                        <div class="buttons">
+                            <button class="confirm-yes">Yes</button>
+                            <button class="confirm-no">No</button>
+                        </div>
+                    `;
+
+                    // Append to the parent div
+                    parentRightDiv.appendChild(confirmationDialog);
+
+                    activeConfirmation = {
+                        dialog: confirmationDialog,
+                        originalButton: originalButton
+                    };
+
+                    // Add event listeners to new buttons
+                    confirmationDialog.querySelector('.confirm-yes').addEventListener('click', function() {
+                        dismissActiveConfirmation(); // Dismiss this confirmation
+                        showLoading();
+                        fetch('{% url "remove_from_cart" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                cart_item_id: itemId
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            hideLoading();
+                            if (data.success) {
+                                const cartItem = document.querySelector(`[data-item-id="${itemId}"]`);
+                                cartItem.remove();
+                                document.getElementById('cart-total').textContent = data.cart_total;
+                                document.getElementById('total-items').textContent = data.cart_items_count;
+                                showToast(data.message);
+
+                                // Check if cart is empty
+                                if (data.cart_items_count === 0) {
+                                    location.reload();
+                                }
+                            } else {
+                                showToast(data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            hideLoading();
+                            showToast('An error occurred. Please try again.', 'error');
+                        });
+                    });
+
+                    confirmationDialog.querySelector('.confirm-no').addEventListener('click', function() {
+                        dismissActiveConfirmation(); // Just dismiss the confirmation
+                    });
+                });
+            });
+
+            // #Ajax - Clear cart (with custom inline confirmation)
+            document.getElementById('clear-cart-btn')?.addEventListener('click', function() {
+                dismissActiveConfirmation(); // Dismiss any other active inline confirmation
+                const originalButton = this;
+                const parentDiv = originalButton.closest('.flex.justify-between.items-center'); // Find the closest parent for positioning
+
+                // Hide the original button
+                originalButton.style.display = 'none';
+
+                // Create confirmation dialog
+                const confirmationDialog = document.createElement('div');
+                    confirmationDialog.className = 'confirmation-dialog';
+                    confirmationDialog.innerHTML = `
+                        <p>Clear all?</p>
+                        <div class="buttons">
+                            <button class="confirm-yes">Yes</button>
+                            <button class="confirm-no">No</button>
+                        </div>
+                    `;
+
+                // Append to the parent div
+                // Position it absolutely within the relative parent, similar to remove button
+                confirmationDialog.style.position = 'absolute';
+                confirmationDialog.style.right = '0';
+                confirmationDialog.style.top = '50%';
+                confirmationDialog.style.transform = 'translateY(-50%)';
+                confirmationDialog.style.minWidth = '120px'; // Keep consistent min-width
+                confirmationDialog.style.flexDirection = 'column'; // Keep consistent flex direction
+                confirmationDialog.style.gap = '6px'; // Keep consistent gap
+                confirmationDialog.style.padding = '8px'; // Keep consistent padding
+                parentDiv.appendChild(confirmationDialog);
+
+                activeConfirmation = {
+                    dialog: confirmationDialog,
+                    originalButton: originalButton
+                };
+
+                // Add event listeners to new buttons
+                confirmationDialog.querySelector('.confirm-yes').addEventListener('click', function() {
+                    dismissActiveConfirmation(); // Dismiss this confirmation
+                    showLoading();
+                    fetch('{% url "clear_cart" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        hideLoading();
+                        if (data.success) {
+                            showToast(data.message);
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        showToast('An error occurred. Please try again.', 'error');
+                    });
+                });
+
+                confirmationDialog.querySelector('.confirm-no').addEventListener('click', function() {
+                    dismissActiveConfirmation(); // Just dismiss the confirmation
+                });
+            });
+        });
+    </script>
+</body>
+</html>

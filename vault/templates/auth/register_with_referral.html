@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZRION - REGISTER</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'navy': '#1a2342',
+            'lavender': '#e6e6fa',
+            'primary': '#1a2342',
+            'secondary': '#e6e6fa',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .register-container {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .input-field {
+      transition: all 0.3s ease;
+    }
+    .input-field:focus {
+      border-color: #1a2342;
+      box-shadow: 0 0 0 2px rgba(26, 35, 66, 0.2);
+    }
+    .btn-hover {
+      transition: all 0.3s ease;
+    }
+    .btn-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26, 35, 66, 0.2);
+    }
+    .social-btn {
+      transition: all 0.3s ease;
+    }
+    .social-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .link-hover {
+      transition: all 0.3s ease;
+    }
+    .link-hover:hover {
+      color: #1a2342;
+      text-decoration: underline;
+    }
+    .home-link {
+      transition: all 0.3s ease;
+    }
+    .home-link:hover {
+      transform: scale(1.1);
+      color: #1a2342;
+    }
+    .circle {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      position: absolute;
+    }
+    @media (max-width: 768px) {
+      .register-container {
+        flex-direction: column;
+      }
+      .left-panel, .right-panel {
+        width: 100%;
+      }
+      .left-panel {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-500 min-h-screen flex items-center justify-center p-4">
+  <!-- Home Page Link -->
+  <div class="fixed top-6 right-6 z-50">
+    <a href="{% url 'front' %}" class="home-link flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg text-navy hover:shadow-xl" title="Go to Home Page">
+      <i class="fas fa-home text-xl"></i>
+    </a>
+  </div>
+
+  <div class="register-container rounded-3xl overflow-hidden w-full max-w-5xl flex">
+    <!-- Left Panel -->
+    <div class="left-panel bg-navy w-2/5 p-8 text-white relative overflow-hidden">
+      <div class="circle w-32 h-32 top-10 left-10 opacity-10"></div>
+      <div class="circle w-48 h-48 bottom-20 right-[-20px] opacity-10"></div>
+      <div class="circle w-16 h-16 top-40 right-20 opacity-10"></div>
+      <div class="circle w-24 h-24 bottom-40 left-[-10px] opacity-10"></div>
+      <div class="circle w-8 h-8 top-20 right-40 opacity-10"></div>
+      
+      <div class="flex flex-col h-full justify-center items-center text-center relative z-10">
+        <h1 class="text-5xl font-bold mb-6">Join AZRION</h1>
+        <p class="text-lg opacity-90 mb-8">Create your account and start your journey</p>
+        <div class="mt-4">
+          <svg class="w-20 h-20 mx-auto opacity-80" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel bg-lavender w-3/5 p-8">
+      <div class="max-w-md mx-auto py-6">
+        <h2 class="text-2xl font-bold text-center text-navy mb-1">REGISTER</h2>
+        <p class="text-center text-gray-600 mb-6">Create your new account</p>
+
+        <!-- Messages Display -->
+        {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+            <div class="p-3 rounded-lg text-white mb-2 {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% elif message.tags == 'warning' %}bg-yellow-500{% else %}bg-blue-500{% endif %}">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                  {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                  {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                  {% else %}
+                    <i class="fas fa-info-circle"></i>
+                  {% endif %}
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium">{{ message }}</p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" id="registerForm">
+          {% csrf_token %}
+          
+          <!-- Full Name -->
+          <div class="mb-4">
+            <label for="full_name" class="block text-gray-700 font-medium mb-2">Full Name *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-user text-gray-400"></i>
+              </div>
+              <input type="text" id="full_name" name="full_name" value="{{ full_name|default:'' }}" required
+                     class="input-field w-full pl-10 pr-3 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                     placeholder="Enter your full name">
+            </div>
+            <div id="full_name_error" class="text-red-500 text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Email Address -->
+          <div class="mb-4">
+            <label for="email" class="block text-gray-700 font-medium mb-2">Email Address *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-envelope text-gray-400"></i>
+              </div>
+              <input type="email" id="email" name="email" value="{{ email|default:'' }}" required
+                     class="input-field w-full pl-10 pr-3 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                     placeholder="Enter your email address">
+            </div>
+            <div id="email_error" class="text-red-500 text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="mb-4">
+            <label for="ph_number" class="block text-gray-700 font-medium mb-2">Phone Number *</label>
+            <div class="relative flex">
+              <span class="flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-100 text-gray-600">+91</span>
+              <input type="tel" id="ph_number" name="ph_number" value="{{ ph_number|default:'' }}" required
+                     class="input-field w-full px-3 py-3 rounded-r-lg border border-gray-300 focus:outline-none" 
+                     placeholder="Enter 10-digit mobile number" maxlength="10">
+            </div>
+            <div id="ph_number_error" class="text-red-500 text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-4">
+            <label for="password" class="block text-gray-700 font-medium mb-2">Password *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-lock text-gray-400"></i>
+              </div>
+              <input type="password" id="password" name="password" required
+                     class="input-field w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                     placeholder="Create a strong password">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <i class="fas fa-eye text-gray-400 cursor-pointer hover:text-gray-600" id="togglePassword"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-500">
+              <p>Password must contain:</p>
+              <ul class="list-disc list-inside space-y-1">
+                <li>At least 8 characters</li>
+                <li>One uppercase letter</li>
+                <li>One lowercase letter</li>
+                <li>One number</li>
+                <li>One special character</li>
+              </ul>
+            </div>
+            <div id="password_error" class="text-red-500 text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="mb-4">
+            <label for="confirm_password" class="block text-gray-700 font-medium mb-2">Confirm Password *</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-lock text-gray-400"></i>
+              </div>
+              <input type="password" id="confirm_password" name="confirm_password" required
+                     class="input-field w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                     placeholder="Confirm your password">
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <i class="fas fa-eye text-gray-400 cursor-pointer hover:text-gray-600" id="toggleConfirmPassword"></i>
+              </div>
+            </div>
+            <div id="confirm_password_error" class="text-red-500 text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Referral Code (Optional) -->
+          <div class="mb-4">
+            <label for="referral_code" class="block text-gray-700 font-medium mb-2">Referral Code (Optional)</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-gift text-gray-400"></i>
+              </div>
+              <input type="text" id="referral_code" name="referral_code" value="{{ referral_code|default:'' }}"
+                     class="input-field w-full pl-10 pr-3 py-3 rounded-lg border border-gray-300 focus:outline-none" 
+                     placeholder="Enter referral code (if any)">
+            </div>
+            <div id="referral_code_error" class="text-red-500 text-sm mt-1 hidden"></div>
+          </div>
+
+          <!-- Terms and Conditions -->
+          <div class="flex items-center mb-6">
+            <input type="checkbox" id="terms" name="terms" required
+                   class="h-4 w-4 text-navy focus:ring-navy border-gray-300 rounded">
+            <label for="terms" class="ml-2 block text-sm text-gray-700">
+              I agree to the <a href="{% url 'terms' %}" class="text-navy link-hover" target="_blank">Terms of Service</a> 
+              and <a href="{% url 'privacy' %}" class="text-navy link-hover" target="_blank">Privacy Policy</a>
+            </label>
+          </div>
+          <div id="terms_error" class="text-red-500 text-sm mb-4 hidden"></div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-hover w-full bg-navy text-white py-3 rounded-lg font-medium flex items-center justify-center">
+            <i class="fas fa-user-plus mr-2"></i> CREATE ACCOUNT
+          </button>
+
+          <!-- Social Registration -->
+          <div class="mt-6">
+            <p class="text-center text-gray-600 mb-4">or register with</p>
+            <div class="flex">
+              <a href="{% url 'social:begin' 'google-oauth2' %}" class="social-btn w-full bg-gray-300 border border-gray-300 py-3 rounded-lg flex items-center justify-center">
+                <i class="fab fa-google text-gray-700 mr-2"></i> Google
+              </a>
+            </div>
+          </div>
+
+          <!-- Login Link -->
+          <div class="mt-6 text-center">
+            <p class="text-gray-600">
+              Already have an account? 
+              <a href="{% url 'login' %}" class="text-navy font-medium link-hover">Login here</a>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Password toggle functionality
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+      const confirmPasswordInput = document.getElementById('confirm_password');
+      const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      confirmPasswordInput.setAttribute('type', type);
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    // Responsive design handler
+    function handleResize() {
+      const leftPanel = document.querySelector('.left-panel');
+      const rightPanel = document.querySelector('.right-panel');
+      if (window.innerWidth < 768) {
+        leftPanel.classList.remove('w-2/5');
+        rightPanel.classList.remove('w-3/5');
+        leftPanel.classList.add('w-full');
+        rightPanel.classList.add('w-full');
+      } else {
+        leftPanel.classList.add('w-2/5');
+        rightPanel.classList.add('w-3/5');
+        leftPanel.classList.remove('w-full');
+        rightPanel.classList.remove('w-full');
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    // Form validation
+    document.addEventListener('DOMContentLoaded', () => {
+      const fields = [
+        {
+          id: 'full_name',
+          validate: (v) => /^[A-Za-z ]+$/.test(v) && v.length >= 2,
+          error: 'Name must contain only letters and spaces (minimum 2 characters).'
+        },
+        {
+          id: 'email',
+          validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+          error: 'Please enter a valid email address.'
+        },
+        {
+          id: 'ph_number',
+          validate: (v) => /^\d{10}$/.test(v),
+          error: 'Enter a valid 10-digit phone number.'
+        },
+        {
+          id: 'password',
+          validate: (v) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(v),
+          error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character.'
+        },
+        {
+          id: 'confirm_password',
+          validate: (v) => v === document.getElementById('password').value,
+          error: 'Passwords do not match.'
+        }
+      ];
+
+      const form = document.getElementById('registerForm');
+
+      // Real-time validation
+      fields.forEach(field => {
+        const input = document.getElementById(field.id);
+        const errorDiv = document.getElementById(field.id + '_error');
+
+        input.addEventListener('blur', () => {
+          const value = input.value.trim();
+          if (value && !field.validate(value)) {
+            errorDiv.textContent = field.error;
+            errorDiv.classList.remove('hidden');
+            input.classList.add('border-red-500');
+          } else {
+            errorDiv.classList.add('hidden');
+            input.classList.remove('border-red-500');
+          }
+        });
+
+        input.addEventListener('input', () => {
+          if (!errorDiv.classList.contains('hidden')) {
+            const value = input.value.trim();
+            if (field.validate(value)) {
+              errorDiv.classList.add('hidden');
+              input.classList.remove('border-red-500');
+            }
+          }
+        });
+      });
+
+      // Form submission validation
+      form.addEventListener('submit', (e) => {
+        let isValid = true;
+
+        // Validate all fields
+        fields.forEach(field => {
+          const input = document.getElementById(field.id);
+          const errorDiv = document.getElementById(field.id + '_error');
+          const value = input.value.trim();
+
+          if (!value || !field.validate(value)) {
+            errorDiv.textContent = field.error;
+            errorDiv.classList.remove('hidden');
+            input.classList.add('border-red-500');
+            isValid = false;
+          }
+        });
+
+        // Validate terms checkbox
+        const terms = document.getElementById('terms');
+        const termsError = document.getElementById('terms_error');
+        if (!terms.checked) {
+          termsError.textContent = 'You must accept the Terms and Privacy Policy.';
+          termsError.classList.remove('hidden');
+          isValid = false;
+        } else {
+          termsError.classList.add('hidden');
+        }
+
+        if (!isValid) {
+          e.preventDefault();
+        }
+      });
+
+      // Phone number input restriction
+      document.getElementById('ph_number').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+      });
+
+      // Referral code uppercase conversion
+      document.getElementById('referral_code').addEventListener('input', function(e) {
+        this.value = this.value.toUpperCase();
+      });
+    });
+
+    // Auto-hide messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const messages = document.querySelectorAll('[class*="bg-green-500"], [class*="bg-red-500"], [class*="bg-yellow-500"], [class*="bg-blue-500"]');
+      messages.forEach(function(message) {
+        setTimeout(function() {
+          message.style.transition = 'opacity 0.5s ease-out';
+          message.style.opacity = '0';
+          setTimeout(function() {
+            message.remove();
+          }, 500);
+        }, 5000);
+      });
+    });
+  </script>
+</body>
+</html>

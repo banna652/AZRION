@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZRION - Where Time Becomes a Treasure.</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'navy': '#1a2342',
+            'lavender': '#e6e6fa',
+            'primary': '#1a2342',
+            'secondary': '#e6e6fa',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .verification-container {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .input-field {
+      transition: all 0.3s ease;
+    }
+    .input-field:focus {
+      border-color: #1a2342;
+      box-shadow: 0 0 0 2px rgba(26, 35, 66, 0.2);
+    }
+    .btn-hover {
+      transition: all 0.3s ease;
+    }
+    .btn-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26, 35, 66, 0.2);
+    }
+    .link-hover {
+      transition: all 0.3s ease;
+    }
+    .link-hover:hover {
+      color: #1a2342;
+      text-decoration: underline;
+    }
+    .circle {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      position: absolute;
+    }
+    .otp-input {
+      width: 50px;
+      height: 60px;
+      font-size: 24px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    .otp-input:focus {
+      border-color: #1a2342;
+      box-shadow: 0 0 0 2px rgba(26, 35, 66, 0.2);
+      outline: none;
+    }
+    .otp-input.error {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    }
+    @media (max-width: 768px) {
+      .verification-container {
+        flex-direction: column;
+      }
+      .left-panel, .right-panel {
+        width: 100%;
+      }
+      .left-panel {
+        height: 200px;
+      }
+      .otp-container {
+        gap: 8px;
+      }
+      .otp-input {
+        width: 40px;
+        height: 50px;
+      }
+    }
+    @media (max-width: 480px) {
+      .otp-input {
+        width: 35px;
+        height: 45px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-500 min-h-screen flex items-center justify-center p-4">
+  <div class="verification-container rounded-3xl overflow-hidden w-full max-w-5xl flex">
+    <div class="left-panel bg-navy w-2/5 p-8 text-white relative overflow-hidden">
+      <div class="circle w-32 h-32 top-10 left-10 opacity-10"></div>
+      <div class="circle w-48 h-48 bottom-20 right-[-20px] opacity-10"></div>
+      <div class="circle w-16 h-16 top-40 right-20 opacity-10"></div>
+      <div class="circle w-24 h-24 bottom-40 left-[-10px] opacity-10"></div>
+      <div class="circle w-8 h-8 top-20 right-40 opacity-10"></div>
+
+      <div class="flex flex-col h-full justify-center items-center text-center relative z-10">
+        <h1 class="text-5xl font-bold mb-6">Verify Email</h1>
+        <p class="text-lg opacity-90 mb-8">We've sent a verification code to your email</p>
+        <div class="mt-4">
+          <svg class="w-20 h-20 mx-auto opacity-80" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel bg-lavender w-3/5 p-8">
+      <div class="max-w-md mx-auto py-8">
+        <h2 class="text-2xl font-bold text-center text-navy mb-1">VERIFICATION CODE</h2>
+        <p class="text-center text-gray-600 mb-2">Enter the 6-digit code sent to</p>
+        <p class="text-center font-medium text-navy mb-8">{{ email }}</p>
+
+        <!-- Display Messages -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                  {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                  {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                  {% else %}
+                    <i class="fas fa-info-circle"></i>
+                  {% endif %}
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium">{{ message }}</p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'verify' %}" id="otpForm">
+          {% csrf_token %}
+          <div class="mb-8">
+            <label class="block text-gray-700 font-medium mb-4 text-center">Enter verification code</label>
+            <div class="flex justify-center gap-3 otp-container">
+              {% for i in "123456" %}
+              <input name="otp{{ forloop.counter }}" type="text" maxlength="1" class="otp-input" autocomplete="off" inputmode="numeric" pattern="[0-9]*" id="otp{{ forloop.counter }}">
+              {% endfor %}
+            </div>
+            <div id="otpError" class="text-red-500 text-sm text-center mt-2 hidden">
+              <i class="fas fa-exclamation-circle mr-1"></i>
+              <span>Invalid OTP. Please try again.</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-hover w-full bg-navy text-white py-3 rounded-lg font-medium flex items-center justify-center mb-6">
+            <i class="fas fa-check-circle mr-2"></i> VERIFY EMAIL
+          </button>
+        </form>
+
+        <form method="POST" action="{% url 'resend_otp' %}" class="text-center" id="resendForm">
+          {% csrf_token %}
+          <p class="text-gray-600 mb-2">Didn't receive the code?</p>
+          <button type="submit" id="resend-btn" class="text-navy font-medium link-hover">
+            Resend Code <span id="countdown" class="text-gray-500">(60s)</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const otpError = document.getElementById('otpError');
+    
+    // Focus first input on load
+    window.addEventListener('load', () => otpInputs[0].focus());
+
+    // Check for error messages and show OTP error if needed
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' and 'Invalid OTP' in message.message %}
+          otpError.classList.remove('hidden');
+          otpInputs.forEach(input => {
+            input.classList.add('error');
+            input.value = '';
+          });
+          setTimeout(() => {
+            otpInputs.forEach(input => input.classList.remove('error'));
+            otpError.classList.add('hidden');
+          }, 5000);
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    otpInputs.forEach((input, index) => {
+      input.addEventListener('input', function() {
+        // Clear error state when user starts typing
+        if (input.classList.contains('error')) {
+          otpInputs.forEach(inp => inp.classList.remove('error'));
+          otpError.classList.add('hidden');
+        }
+
+        if (this.value.length === 1 && index < otpInputs.length - 1) {
+          otpInputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && !this.value && index > 0) {
+          otpInputs[index - 1].focus();
+        }
+      });
+
+      input.addEventListener('keypress', function(e) {
+        const charCode = e.which ? e.which : e.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+          e.preventDefault();
+        }
+      });
+
+      input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text');
+        const digits = pasteData.replace(/\D/g, '').split('').slice(0, otpInputs.length);
+        
+        digits.forEach((digit, i) => {
+          if (index + i < otpInputs.length) {
+            otpInputs[index + i].value = digit;
+            if (index + i + 1 < otpInputs.length) {
+              otpInputs[index + i + 1].focus();
+            }
+          }
+        });
+      });
+    });
+
+    // Countdown timer for resend button - persistent across page reloads
+    let countdown = parseInt(localStorage.getItem('otpCountdown')) || 60;
+    const countdownElement = document.getElementById('countdown');
+    const resendButton = document.getElementById('resend-btn');
+    
+    function updateCountdown() {
+      if (countdown > 0) {
+        countdownElement.textContent = `(${countdown}s)`;
+        resendButton.disabled = true;
+        resendButton.classList.add('text-gray-400', 'cursor-not-allowed');
+        resendButton.classList.remove('text-navy');
+        localStorage.setItem('otpCountdown', countdown);
+        countdown--;
+        setTimeout(updateCountdown, 1000);
+      } else {
+        countdownElement.textContent = '';
+        resendButton.disabled = false;
+        resendButton.classList.remove('text-gray-400', 'cursor-not-allowed');
+        resendButton.classList.add('text-navy');
+        localStorage.removeItem('otpCountdown');
+      }
+    }
+
+    // Start countdown
+    updateCountdown();
+
+    // Reset countdown when resend is clicked
+    document.getElementById('resendForm').addEventListener('submit', function() {
+      countdown = 60;
+      localStorage.setItem('otpCountdown', countdown);
+    });
+
+    // Auto-hide messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const messages = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"], [class*="bg-yellow-50"], [class*="bg-blue-50"]');
+      messages.forEach(function(message) {
+        setTimeout(function() {
+          message.style.transition = 'opacity 0.5s ease-out';
+          message.style.opacity = '0';
+          setTimeout(function() {
+            message.remove();
+          }, 500);
+        }, 5000);
+      });
+    });
+
+    // Auto-submit when all fields are filled
+    otpInputs[5].addEventListener('input', function() {
+      const allFilled = Array.from(otpInputs).every(input => input.value);
+      if (allFilled) {
+        setTimeout(() => {
+          document.getElementById('otpForm').submit();
+        }, 500);
+      }
+    });
+  </script>
+</body>
+</html>

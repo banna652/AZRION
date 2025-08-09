@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% include 'nav_style.html' %}
+    <style>
+        .stats-card {
+            transition: all 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .stats-icon {
+            transition: transform 0.2s ease;
+        }
+        .stats-card:hover .stats-icon {
+            transform: scale(1.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-navy mb-2">Dashboard</h2>
+            <p class="text-gray-600">Welcome back! Here's what's happening with your store.</p>
+        </div>
+
+        <!-- Revenue Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i class="fas fa-rupee-sign text-2xl text-green-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Today's Revenue</h3>
+                <p class="text-2xl font-bold text-green-600">₹{{ today_revenue|floatformat:2 }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ today_order_count }} orders</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i class="fas fa-chart-line text-2xl text-blue-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Weekly Revenue</h3>
+                <p class="text-2xl font-bold text-blue-600">₹{{ weekly_revenue|floatformat:2 }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ weekly_order_count }} orders</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i class="fas fa-calendar-alt text-2xl text-purple-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Monthly Revenue</h3>
+                <p class="text-2xl font-bold text-purple-600">₹{{ monthly_revenue|floatformat:2 }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ monthly_order_count }} orders</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i class="fas fa-coins text-2xl text-yellow-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Total Revenue</h3>
+                <p class="text-2xl font-bold text-yellow-600">₹{{ total_revenue|floatformat:2 }}</p>
+                <p class="text-xs text-gray-400 mt-1">All time</p>
+            </div>
+        </div>
+
+        <!-- Basic Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i class="fas fa-users text-2xl text-blue-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Total Users</h3>
+                <p class="text-3xl font-bold text-gray-900">{{ total_users }}</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i class="fas fa-box text-2xl text-green-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Total Products</h3>
+                <p class="text-3xl font-bold text-gray-900">{{ total_products }}</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i class="fas fa-shopping-cart text-2xl text-purple-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Total Orders</h3>
+                <p class="text-3xl font-bold text-gray-900">{{ total_orders }}</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-red-100">
+                        <i class="fas fa-tags text-2xl text-red-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Active Coupons</h3>
+                <p class="text-3xl font-bold text-gray-900">{{ active_coupons }}</p>
+                <p class="text-xs text-gray-400 mt-1">of {{ total_coupons }} total</p>
+            </div>
+        </div>
+
+        <!-- Charts and Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Sales Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-line mr-2"></i>Daily Sales Trend (Last 7 Days)
+                </h3>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Products -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-trophy mr-2"></i>Top Selling Products (Last 30 Days)
+                </h3>
+                <div class="space-y-3">
+                    {% for product in top_products %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ product.product__product_name|truncatechars:25 }}</p>
+                            <p class="text-sm text-gray-500">{{ product.total_quantity }} units sold</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-green-600">₹{{ product.total_revenue|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">No sales data available</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coupon and Discount Statistics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-orange-100">
+                        <i class="fas fa-ticket-alt text-2xl text-orange-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Coupons Used Today</h3>
+                <p class="text-2xl font-bold text-orange-600">{{ coupon_usage_today }}</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center stats-card">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="p-3 rounded-full bg-red-100">
+                        <i class="fas fa-percent text-2xl text-red-600 stats-icon"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2">Total Discount Given</h3>
+                <p class="text-2xl font-bold text-red-600">₹{{ total_discount_given|floatformat:2 }}</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                <div class="flex justify-center space-x-4">
+                    <a href="{% url 'sales_report' %}" class="bg-navy hover:bg-navy-dark text-white px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-chart-bar mr-2"></i>View Full Report
+                    </a>
+                    <a href="{% url 'coupon_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-tags mr-2"></i>Manage Coupons
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-clock mr-2"></i>Recent Orders
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for order in recent_orders %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ order.order_number }}</div>
+                            </td>
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ order.user.full_name }}</div>
+                                <div class="text-sm text-gray-500">{{ order.user.email }}</div>
+                            </td>
+                            <td class="py-4 px-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ order.created_at|date:"M d, Y H:i" }}
+                            </td>
+                            <td class="py-4 px-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                                ₹{{ order.total_amount|floatformat:2 }}
+                            </td>
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if order.status == 'delivered' %}bg-green-100 text-green-800
+                                    {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif order.status == 'processing' %}bg-blue-100 text-blue-800
+                                    {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ order.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-500">
+                                <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                                <p>No recent orders</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+
+    <script>
+        // Initialize chart
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveNavItem('dashboard');
+            
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const dailySalesData = {{ daily_sales|safe }};
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailySalesData.map(item => {
+                        const date = new Date(item.date);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }),
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: dailySalesData.map(item => item.revenue),
+                        borderColor: '#16213e',
+                        backgroundColor: 'rgba(22, 33, 62, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Orders',
+                        data: dailySalesData.map(item => item.orders),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Orders'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+
+        function setActiveNavItem(currentPage) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+        }
+    </script>
+</body>
+</html>

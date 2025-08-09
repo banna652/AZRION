@@ -1,0 +1,124 @@
+<!-- Navigation -->
+<nav class="bg-navy shadow-lg sticky-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <button id="sidebarToggle" class="md:hidden text-white hover:text-gray-300 focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div class="flex-shrink-0 flex items-center ml-4 md:ml-0">
+                    <h1 class="text-white text-xl font-bold tracking-widest uppercase">AZRION Admin</h1>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-4">
+                <div class="text-white text-sm">
+                    Welcome, {{ user.username }}
+                </div>
+                <a href="{% url 'logout' %}">
+                    <button class="btn-primaryy px-4 py-2 text-sm text-white">
+                        Logout
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="flex main-content-with-nav">
+    <!-- Sidebar -->
+    <div id="sidebar" class="bg-navy-dark w-64 sticky-sidebar sidebar-transition transform -translate-x-full md:translate-x-0 fixed md:fixed">
+        <div class="p-4 h-full overflow-y-auto">
+            <ul class="space-y-2">
+                <li>
+                    <a href="{% url 'dashboard' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'user_management' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="users">
+                        <i class="fas fa-users mr-3"></i>
+                        Users
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'category_list' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="categories">
+                        <i class="fas fa-tags mr-3"></i>
+                        Categories
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'product_list' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="products">
+                        <i class="fas fa-box mr-3"></i>
+                        Products
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'order_management_page' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="orders">
+                        <i class="fas fa-shopping-cart mr-3"></i>
+                        Orders
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'coupon_list' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="coupons">
+                        <i class="fas fa-ticket-alt mr-3"></i>
+                        Coupons
+                    </a>
+                </li>
+                <li>
+                    <div class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors cursor-pointer" onclick="toggleOffersMenu()" data-page="offers">
+                        <i class="fas fa-percent mr-3"></i>
+                        Offers
+                        <i class="fas fa-chevron-down ml-auto transition-transform" id="offers-chevron"></i>
+                    </div>
+                    <ul class="ml-6 mt-2 space-y-1 hidden" id="offers-submenu">
+                        <li>
+                            <a href="{% url 'category_offer_list' %}" class="nav-link flex items-center p-2 text-white hover:bg-navy rounded-lg transition-colors text-sm" data-page="offers">
+                                <i class="fas fa-tags mr-2"></i>
+                                Category Offers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'referral_offer_list' %}" class="nav-link flex items-center p-2 text-white hover:bg-navy rounded-lg transition-colors text-sm" data-page="offers">
+                                <i class="fas fa-handshake mr-2"></i>
+                                Referral Offers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'referral_rewards_list' %}" class="nav-link flex items-center p-2 text-white hover:bg-navy rounded-lg transition-colors text-sm" data-page="offers">
+                                <i class="fas fa-gift mr-2"></i>
+                                Referral Rewards
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"></div>
+
+    <script>
+        function toggleOffersMenu() {
+            const submenu = document.getElementById('offers-submenu');
+            const chevron = document.getElementById('offers-chevron');
+            
+            submenu.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // Auto-expand offers menu if on offers page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('offer') || currentPath.includes('referral')) {
+                const submenu = document.getElementById('offers-submenu');
+                const chevron = document.getElementById('offers-chevron');
+                if (submenu && chevron) {
+                    submenu.classList.remove('hidden');
+                    chevron.classList.add('rotate-180');
+                }
+            }
+        });
+    </script>
+</div>

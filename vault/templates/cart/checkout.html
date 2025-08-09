@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% if razorpay_enabled %}
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    {% endif %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Hide scrollbars */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        *::-webkit-scrollbar {
+            display: none;
+        }
+        
+        html, body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .checkout-container {
+            background: rgb(210, 216, 231);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(3, 3, 3, 0.19);
+            border: 1px solid rgb(210, 216, 231);
+        }
+
+        .address-card {
+            background: #7dff88ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(22, 33, 62, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .address-card:hover {
+            transform: translateY(3px);
+            box-shadow: 0 8px 25px rgba(22, 33, 62, 0);
+        }
+
+        .address-card.selected {
+            border-color: #16213e;
+            background: #daecfdff;
+        }
+
+        .order-summary-card {
+            background: #16213e;
+            border-radius: 15px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(22, 33, 62, 0.3);
+        }
+
+        .btn-primary {
+            background: #16213e;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.16);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            border: 2px solid #16213e;
+            color: #16213e;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #16213e;
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-secondary:hover::before {
+            left: 0;
+        }
+
+        .btn-secondary:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(22, 33, 62, 0.2);
+        }
+
+        .breadcrumb {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(22, 33, 62, 0.1);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #16213e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .payment-method-card {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .payment-method-card.selected {
+            border-color: #16213e;
+            background: #cdebffff;
+        }
+
+        .payment-method-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-method-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f3f4f6;
+        }
+
+        .payment-method-card.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .coupon-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .coupon-input {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .coupon-input:focus {
+            outline: none;
+            border-color: #16213e;
+            box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+        }
+
+        .coupon-btn {
+            background: #16213e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .coupon-btn:hover {
+            background: #1e293b;
+            transform: translateY(-1px);
+        }
+
+        .coupon-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .applied-coupon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .discount-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .remove-coupon-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+        }
+
+        .remove-coupon-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .remove-coupon-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .price-breakdown {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #d1d5db;
+        }
+
+        .price-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 12px;
+            margin-top: 12px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .discount-row {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* Available Coupons Styles */
+        .available-coupons {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .coupon-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .coupon-card:hover {
+            border-color: #16213e;
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .coupon-card.referral {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-color: #f59e0b;
+        }
+
+        .coupon-card.referral:hover {
+            background: linear-gradient(135deg, #fde68a, #fcd34d);
+        }
+
+        .coupon-code {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 16px;
+            color: #16213e;
+        }
+
+        .coupon-description {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .coupon-discount {
+            font-weight: bold;
+            color: #059669;
+            font-size: 14px;
+        }
+
+        .referral-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .no-coupons {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-container {
+                padding: 16px;
+                border-radius: 16px;
+            }
+            .order-summary-card {
+                padding: 20px;
+            }
+            .coupon-section {
+                padding: 16px;
+            }
+            .coupon-input, .coupon-btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#16213e]">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>Processing your order...</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Breadcrumb -->
+            <nav class="mb-6">
+                <div class="breadcrumb shadow-lg">
+                    <ol class="flex items-center space-x-1 text-xs text-gray-600">
+                        <li><a href="{% url 'home' %}" class="hover:text-[#16213e] font-medium">Home</a></li>
+                        <li><i class="fas fa-chevron-right text-xs"></i></li>
+                        <li><a href="{% url 'cart_view' %}" class="hover:text-[#16213e] font-medium">Cart</a></li>
+                        <li><i class="fas fa-chevron-right text-xs"></i></li>
+                        <li class="text-gray-900 font-semibold">Checkout</li>
+                    </ol>
+                </div>
+            </nav>
+
+            <div class="checkout-container bg-gray-300 shadow-lg shadow-black">
+                <h1 class="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Delivery Address Section -->
+                    <div class="space-y-6">
+                        <div class="bg-gray-300 rounded-3xl p-6 shadow-lg shadow-gray-400">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-xl font-bold text-gray-900">Delivery Address</h2>
+                                <a href="{% url 'add_address' %}" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold">
+                                    <i class="fas fa-plus mr-1"></i>Add New
+                                </a>
+                            </div>
+                            {% if addresses %}
+                                <div class="space-y-3">
+                                    {% for address in addresses %}
+                                        <div class="address-card bg-gray-200 shadow-lg shadow-gray-400 address-option {% if address.is_default %}selected{% endif %}" data-address-id="{{ address.id }}">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <input type="radio" name="selected_address" value="{{ address.id }}" class="mt-1 text-[#16213e]" {% if address.is_default %}checked{% endif %}>
+                                                    <div>
+                                                        <div class="flex items-center space-x-2 mb-2">
+                                                            <h3 class="font-bold text-gray-900">{{ address.full_name }}</h3>
+                                                            <span class="px-2 py-1 bg-blue-100 text-xs rounded-full font-medium">{{ address.get_address_type_display }}</span>
+                                                            {% if address.is_default %}
+                                                                <span class="px-2 py-1 bg-[#16213e] text-white text-xs rounded-full font-medium">Default</span>
+                                                            {% endif %}
+                                                        </div>
+                                                        <p class="text-sm text-gray-900 mb-1">
+                                                            {{ address.address_line_1 }}
+                                                            {% if address.address_line_2 %}, {{ address.address_line_2 }}{% endif %}
+                                                        </p>
+                                                        <p class="text-sm text-gray-900 mb-1">
+                                                            {{ address.city }}, {{ address.state }} - {{ address.postal_code }}
+                                                        </p>
+                                                        <p class="text-sm text-gray-900 mb-1">{{ address.country }}</p>
+                                                        <p class="text-sm text-gray-900">Phone: {{ address.phone_number }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex space-x-2">
+                                                    <a href="{% url 'edit_address' address.id %}" class="text-[#16213e] hover:text-[#1e293b] text-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-12">
+                                    <i class="fas fa-map-marker-alt text-6xl text-gray-300 mb-4"></i>
+                                    <h3 class="text-xl font-bold text-gray-600 mb-2">No addresses found</h3>
+                                    <p class="text-gray-500 mb-6">Please add a delivery address to continue.</p>
+                                    <a href="{% url 'add_address' %}" class="btn-primary px-6 py-3 text-white rounded-lg font-semibold">
+                                        Add Address
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Order Summary Section -->
+                    <div class="space-y-6">
+                        <div class="order-summary-card">
+                            <h2 class="text-xl font-bold text-white mb-6">Order Summary</h2>
+                            
+                            <!-- Cart Items -->
+                            <div class="space-y-4 mb-6">
+                                {% for item in cart_items %}
+                                    <div class="flex items-center space-x-4 pb-4 border-b border-gray-600">
+                                        <div class="flex-shrink-0">
+                                            {% if item.variant.images.first %}
+                                                <img src="{{ item.variant.images.first.image.url }}" alt="{{ item.product.product_name }}" class="w-16 h-16 object-cover rounded-lg">
+                                            {% elif item.product.get_main_image %}
+                                                <img src="{{ item.product.get_main_image.url }}" alt="{{ item.product.product_name }}" class="w-16 h-16 object-cover rounded-lg">
+                                            {% else %}
+                                                <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center">
+                                                    <i class="fas fa-image text-gray-400"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-bold text-white text-sm">{{ item.product.product_name }}</h3>
+                                            <p class="text-xs text-gray-300">Color: {{ item.variant.get_color_display }}</p>
+                                            <p class="text-xs text-gray-300">Quantity: {{ item.quantity }}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-bold text-white">₹{{ item.get_total_price }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Coupon Section -->
+                            <div class="coupon-section">
+                                {% if applied_coupon %}
+                                    <div class="applied-coupon">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2 mb-2">
+                                                <i class="fas fa-ticket-alt"></i>
+                                                <span class="font-bold">{{ applied_coupon.code }}</span>
+                                                <span class="discount-badge">
+                                                    {% if applied_coupon.discount_type == 'percentage' %}
+                                                        {{ applied_coupon.discount_value }}% OFF
+                                                    {% else %}
+                                                        ₹{{ applied_coupon.discount_value }} OFF
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            {% if applied_coupon.description %}
+                                                <p class="text-sm opacity-90">{{ applied_coupon.description }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <button type="button" id="remove-coupon-btn" class="remove-coupon-btn" title="Remove coupon">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <!-- Available Coupons Display -->
+                                    {% if available_coupons %}
+                                        <div class="mb-4">
+                                            <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                                                <i class="fas fa-tags mr-2 text-[#16213e]"></i>
+                                                Available Coupons
+                                            </h4>
+                                            <div class="available-coupons">
+                                                {% for coupon_data in available_coupons %}
+                                                    <div class="coupon-card {% if coupon_data.type == 'referral' %}referral{% endif %}" 
+                                                         onclick="applyCouponFromList('{{ coupon_data.coupon.code }}')">
+                                                        <div class="flex items-center justify-between">
+                                                            <div class="flex-1">
+                                                                <div class="flex items-center space-x-2 mb-1">
+                                                                    <span class="coupon-code">{{ coupon_data.coupon.code }}</span>
+                                                                    {% if coupon_data.type == 'referral' %}
+                                                                        <span class="referral-badge">Referral Reward</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                {% if coupon_data.coupon.description %}
+                                                                    <p class="coupon-description">{{ coupon_data.coupon.description }}</p>
+                                                                {% endif %}
+                                                                <div class="flex items-center justify-between mt-2">
+                                                                    <span class="text-xs text-gray-600">
+                                                                        {% if coupon_data.coupon.discount_type == 'percentage' %}
+                                                                            {{ coupon_data.coupon.discount_value }}% OFF
+                                                                        {% else %}
+                                                                            ₹{{ coupon_data.coupon.discount_value }} OFF
+                                                                        {% endif %}
+                                                                        {% if coupon_data.coupon.minimum_amount > 0 %}
+                                                                            (Min: ₹{{ coupon_data.coupon.minimum_amount }})
+                                                                        {% endif %}
+                                                                    </span>
+                                                                    <span class="coupon-discount">Save ₹{{ coupon_data.discount_amount|floatformat:0 }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="ml-3">
+                                                                <i class="fas fa-chevron-right text-gray-400"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="no-coupons">
+                                            <i class="fas fa-ticket-alt text-3xl text-gray-400 mb-2"></i>
+                                            <p>No coupons available for this order</p>
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Manual Coupon Input -->
+                                    <div class="border-t pt-4">
+                                        <h5 class="font-medium text-gray-900 mb-3">Or enter coupon code manually:</h5>
+                                        <div class="flex items-center space-x-3">
+                                            <div class="flex-1">
+                                                <input type="text" id="coupon-input" class="coupon-input w-full" placeholder="Enter coupon code" maxlength="50">
+                                            </div>
+                                            <button type="button" id="apply-coupon-btn" class="coupon-btn">
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Price Breakdown -->
+                            <div class="price-breakdown">
+                                <div class="price-row">
+                                    <span>Subtotal:</span>
+                                    <span class="font-semibold" id="subtotal-amount">₹{{ subtotal }}</span>
+                                </div>
+                                {% if coupon_discount > 0 %}
+                                    <div class="price-row discount-row">
+                                        <span>Coupon Discount:</span>
+                                        <span class="font-semibold" id="coupon-discount-amount">-₹{{ coupon_discount }}</span>
+                                    </div>
+                                {% endif %}
+                                <div class="price-row">
+                                    <span>Shipping:</span>
+                                    <span class="font-semibold" id="shipping-amount">
+                                        {% if shipping_charge > 0 %}
+                                            ₹{{ shipping_charge }}
+                                        {% else %}
+                                            Free
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="price-row total">
+                                    <span>Total:</span>
+                                    <span id="total-amount">₹{{ total_amount }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="mb-6 mt-6">
+                                <h3 class="font-bold text-white mb-4">Payment Method</h3>
+                                <div class="space-y-3">
+                                    {% if razorpay_enabled %}
+                                    <div class="payment-method-card" data-payment="online">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="radio" name="payment_method" value="online" class="text-[#16213e]">
+                                            <div class="flex-1">
+                                                <h4 class="font-bold text-gray-900">Online Payment</h4>
+                                                <p class="text-sm text-gray-600">Pay securely using UPI, Cards, Net Banking</p>
+                                            </div>
+                                            <div class="ml-auto">
+                                                <i class="fas fa-credit-card text-2xl text-[#16213e]"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="payment-method-card disabled">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="radio" name="payment_method" value="online" disabled class="text-[#16213e]">
+                                            <div class="flex-1">
+                                                <h4 class="font-bold text-gray-500">Online Payment</h4>
+                                                <p class="text-sm text-gray-500">Currently unavailable - Configuration issue</p>
+                                            </div>
+                                            <div class="ml-auto">
+                                                <i class="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    <div class="payment-method-card {% if not razorpay_enabled %}selected{% endif %}" data-payment="cod">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="radio" name="payment_method" value="cod" {% if not razorpay_enabled %}checked{% endif %} class="text-[#16213e]">
+                                            <div class="flex-1">
+                                                <h4 class="font-bold text-gray-900">Cash on Delivery</h4>
+                                                <p class="text-sm text-gray-600">Pay when you receive your order</p>
+                                            </div>
+                                            <div class="ml-auto">
+                                                <i class="fas fa-money-bill-wave text-2xl text-[#16213e]"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Place Order Button -->
+                            <button type="button" id="place-order-btn" class="btn-primary shadow-lg shadow-black w-full py-4 text-white rounded-lg font-bold text-lg" {% if not addresses %}disabled{% endif %}>
+                                <i class="fas fa-shopping-bag mr-2"></i>
+                                Place Order
+                            </button>
+                            {% if shipping_charge > 0 %}
+                                <p class="text-sm text-gray-300 mt-3 text-center">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Free shipping on orders above ₹500
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const razorpayEnabled = {{ razorpay_enabled|yesno:"true,false" }};
+
+            function showLoading() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            function hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Function to apply coupon from the list
+            window.applyCouponFromList = function(couponCode) {
+                const couponInput = document.getElementById('coupon-input');
+                const applyCouponBtn = document.getElementById('apply-coupon-btn');
+                
+                if (couponInput && applyCouponBtn) {
+                    couponInput.value = couponCode;
+                    applyCouponBtn.click();
+                } else {
+                    // Direct application if input is not available
+                    applyCoupon(couponCode);
+                }
+            };
+
+            // Function to apply coupon
+            function applyCoupon(couponCode) {
+                if (!couponCode) {
+                    showToast('Please enter a coupon code.', 'error');
+                    return;
+                }
+
+                showLoading();
+
+                fetch('/apply-coupon/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        coupon_code: couponCode
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showToast(data.message);
+                        setTimeout(() => {
+                            location.reload(); // Reload to show applied coupon
+                        }, 1000);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                    showToast('An error occurred while applying the coupon.', 'error');
+                });
+            }
+
+            // Handle address selection
+            document.querySelectorAll('.address-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    // Update visual selection
+                    document.querySelectorAll('.address-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+
+            // Handle payment method selection
+            document.querySelectorAll('.payment-method-card:not(.disabled)').forEach(card => {
+                card.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    if (!radio.disabled) {
+                        radio.checked = true;
+                        // Update visual selection
+                        document.querySelectorAll('.payment-method-card').forEach(c => {
+                            c.classList.remove('selected');
+                        });
+                        this.classList.add('selected');
+                    }
+                });
+            });
+
+            // Coupon functionality
+            const applyCouponBtn = document.getElementById('apply-coupon-btn');
+            const couponInput = document.getElementById('coupon-input');
+            const removeCouponBtn = document.getElementById('remove-coupon-btn');
+
+            if (applyCouponBtn && couponInput) {
+                applyCouponBtn.addEventListener('click', function() {
+                    const couponCode = couponInput.value.trim().toUpperCase();
+                    applyCoupon(couponCode);
+                });
+
+                // Allow Enter key to apply coupon
+                couponInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        applyCouponBtn.click();
+                    }
+                });
+            }
+
+            // Remove coupon functionality
+            if (removeCouponBtn) {
+                removeCouponBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Remove coupon button clicked'); // Debug log
+                    
+                    removeCouponBtn.disabled = true;
+                    removeCouponBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    fetch('/remove-coupon/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    })
+                    .then(response => {
+                        console.log('Response received:', response); // Debug log
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data); // Debug log
+                        if (data.success) {
+                            showToast(data.message);
+                            setTimeout(() => {
+                                location.reload(); // Reload to show removed coupon
+                            }, 1000);
+                        } else {
+                            showToast(data.message, 'error');
+                            removeCouponBtn.disabled = false;
+                            removeCouponBtn.innerHTML = '<i class="fas fa-times"></i>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred while removing the coupon.', 'error');
+                        removeCouponBtn.disabled = false;
+                        removeCouponBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    });
+                });
+            }
+
+            // Place order functionality
+            const placeOrderBtn = document.getElementById('place-order-btn');
+            placeOrderBtn?.addEventListener('click', function() {
+                const selectedAddress = document.querySelector('input[name="selected_address"]:checked');
+                const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+
+                if (!selectedAddress) {
+                    showToast('Please select a delivery address.', 'error');
+                    return;
+                }
+
+                if (!selectedPayment) {
+                    showToast('Please select a payment method.', 'error');
+                    return;
+                }
+
+                if (selectedPayment.value === 'online') {
+                    if (!razorpayEnabled) {
+                        showToast('Online payment is currently unavailable. Please try Cash on Delivery.', 'error');
+                        return;
+                    }
+                    // Handle online payment
+                    handleOnlinePayment(selectedAddress.value);
+                } else {
+                    // Handle COD
+                    handleCODPayment(selectedAddress.value);
+                }
+            });
+
+            function handleOnlinePayment(addressId) {
+                showLoading();
+
+                fetch('/create-razorpay-order/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        address_id: addressId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        if (typeof Razorpay === 'undefined') {
+                            showToast('Payment gateway is not loaded. Please refresh and try again.', 'error');
+                            return;
+                        }
+
+                        const options = {
+                            key: '{{ razorpay_key_id }}',
+                            amount: data.amount,
+                            currency: data.currency,
+                            name: data.name,
+                            description: data.description,
+                            order_id: data.razorpay_order_id,
+                            prefill: data.prefill,
+                            theme: {
+                                color: '#16213e'
+                            },
+                            handler: function(response) {
+                                verifyPayment(response, data.order_id);
+                            },
+                            modal: {
+                                ondismiss: function() {
+                                    window.location.href = `/payment-failure/${data.order_id}/`;
+                                }
+                            }
+                        };
+
+                        const rzp = new Razorpay(options);
+                        rzp.open();
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                    showToast('An error occurred while creating payment order.', 'error');
+                });
+            }
+
+            function verifyPayment(paymentResponse, orderId) {
+                showLoading();
+
+                fetch('/verify-payment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_signature: paymentResponse.razorpay_signature,
+                        order_id: orderId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showToast(data.message);
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1000);
+                    } else {
+                        showToast(data.message, 'error');
+                        setTimeout(() => {
+                            window.location.href = `/payment-failure/${orderId}/`;
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                    showToast('Payment verification failed.', 'error');
+                    setTimeout(() => {
+                        window.location.href = `/payment-failure/${orderId}/`;
+                    }, 2000);
+                });
+            }
+
+            function handleCODPayment(addressId) {
+                showLoading();
+
+                fetch('/place-order/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        address_id: addressId,
+                        payment_method: 'cod'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showToast(data.message);
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1000);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                    showToast('An error occurred while placing the order.', 'error');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

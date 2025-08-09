@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wallet - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wallet-card {
+            background: linear-gradient(135deg, #16213e 0%, #1e293b 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        .balance-card {
+            background: rgba(227, 232, 255, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .transaction-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #16213e;
+        }
+
+        .transaction-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .referral-card {
+            background: rgba(227, 232, 255, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .copy-button {
+            transition: all 0.3s ease;
+        }
+
+        .copy-button:hover {
+            transform: scale(1.05);
+        }
+
+        .transaction-credit {
+            color: #059669;
+            background: #d1fae5;
+        }
+
+        .transaction-debit {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Custom alert styles */
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-alert.show {
+            transform: translateX(0);
+        }
+
+        .custom-alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .custom-alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .custom-alert.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .wallet-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .transaction-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .referral-link-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#16213e]">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+    
+    <div class="pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <div class="flex items-center gap-4 mb-4">
+                    <a href="{% url 'user_profile' %}" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <h1 class="text-4xl font-bold text-gray-300">My Wallet</h1>
+                </div>
+                <p class="text-gray-400">Manage your wallet balance and referral earnings</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Wallet Balance Card -->
+                    <div class="wallet-card rounded-2xl p-8 text-white shadow-lg shadow-black">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold mb-2">Wallet Balance</h2>
+                                <p class="text-gray-300">Available funds in your account</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-4xl font-bold mb-2">₹{{ wallet.balance|floatformat:2 }}</div>
+                                <div class="text-sm text-gray-300">Current Balance</div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="balance-card rounded-xl p-4 text-gray-900">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-lg font-bold">₹{{ total_referral_earnings|floatformat:2 }}</div>
+                                        <div class="text-sm text-gray-600">Referral Earnings</div>
+                                    </div>
+                                    <i class="fas fa-users text-2xl text-[#16213e]"></i>
+                                </div>
+                            </div>
+                            <div class="balance-card rounded-xl p-4 text-gray-900">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-lg font-bold">{{ total_referrals }}</div>
+                                        <div class="text-sm text-gray-600">Total Referrals</div>
+                                    </div>
+                                    <i class="fas fa-handshake text-2xl text-[#16213e]"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction History -->
+                    <div class="balance-card rounded-2xl p-8 shadow-lg shadow-black">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-2xl font-bold text-gray-900">Transaction History</h3>
+                            <div class="text-sm text-gray-600">
+                                <i class="fas fa-history mr-1"></i>
+                                Recent Activity
+                            </div>
+                        </div>
+
+                        {% if transactions %}
+                            <div class="space-y-4">
+                                {% for transaction in transactions %}
+                                    <div class="transaction-card bg-white rounded-xl p-4 shadow-md">
+                                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 transaction-item">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {% if transaction.transaction_type == 'credit' %}bg-green-100{% else %}bg-red-100{% endif %}">
+                                                        <i class="fas {% if transaction.transaction_type == 'credit' %}fa-plus text-green-600{% else %}fa-minus text-red-600{% endif %}"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-semibold text-gray-900">
+                                                            {% if transaction.transaction_type == 'credit' %}Money Added{% else %}Money Deducted{% endif %}
+                                                        </h4>
+                                                        <p class="text-sm text-gray-600">{{ transaction.created_at|date:"M d, Y - H:i" }}</p>
+                                                    </div>
+                                                </div>
+                                                {% if transaction.description %}
+                                                    <p class="text-sm text-gray-700 ml-13">{{ transaction.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-lg font-bold {% if transaction.transaction_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                                    {% if transaction.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount|floatformat:2 }}
+                                                </div>
+                                                <div class="text-xs px-2 py-1 rounded-full {% if transaction.transaction_type == 'credit' %}transaction-credit{% else %}transaction-debit{% endif %}">
+                                                    {{ transaction.get_transaction_type_display }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if transactions.has_other_pages %}
+                                <div class="flex justify-center mt-8">
+                                    <nav class="flex items-center space-x-2">
+                                        {% if transactions.has_previous %}
+                                            <a href="?page={{ transactions.previous_page_number }}" class="px-3 py-2 rounded-lg bg-[#16213e] text-white hover:bg-gray-600 transition-colors">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <span class="px-4 py-2 text-gray-700">
+                                            Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}
+                                        </span>
+                                        
+                                        {% if transactions.has_next %}
+                                            <a href="?page={{ transactions.next_page_number }}" class="px-3 py-2 rounded-lg bg-[#16213e] text-white hover:bg-gray-600 transition-colors">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        {% endif %}
+                                    </nav>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-12">
+                                <i class="fas fa-receipt text-6xl text-gray-400 mb-4"></i>
+                                <h4 class="text-xl font-semibold text-gray-900 mb-2">No Transactions Yet</h4>
+                                <p class="text-gray-600">Your transaction history will appear here</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Referral Program -->
+                    <div class="referral-card rounded-2xl p-6 shadow-lg shadow-black">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-[#16213e] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-gift text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Refer & Earn</h3>
+                            {% if active_referral_offer %}
+                                <p class="text-gray-600 text-sm">
+                                    Earn ₹{{ active_referral_offer.reward_value|floatformat:0 }} for each successful referral!
+                                </p>
+                            {% else %}
+                                <p class="text-gray-600 text-sm">Invite friends and earn rewards</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Referral Code -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Your Referral Code</label>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="referralCode" value="{{ referral_code }}" readonly class="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-mono">
+                                <button onclick="copyReferralCode()" class="copy-button px-4 py-2 bg-[#16213e] text-white rounded-lg hover:bg-gray-600 transition-colors">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Referral Link -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Referral Link</label>
+                            <div class="referral-link-container flex items-center gap-2">
+                                <input type="text" id="referralLink" value="{{ referral_link }}" readonly class="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-xs">
+                                <button onclick="copyReferralLink()" class="copy-button px-4 py-2 bg-[#16213e] text-white rounded-lg hover:bg-gray-600 transition-colors">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Share Buttons -->
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <button onclick="shareWhatsApp()" class="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                <i class="fab fa-whatsapp"></i>
+                                <span class="text-sm">WhatsApp</span>
+                            </button>
+                            <button onclick="shareEmail()" class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-envelope"></i>
+                                <span class="text-sm">Email</span>
+                            </button>
+                        </div>
+
+                        <!-- Referral Stats -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="stat-card bg-white rounded-xl p-4 text-center shadow-md">
+                                <div class="text-2xl font-bold text-[#16213e] mb-1">{{ total_referrals }}</div>
+                                <div class="text-xs text-gray-600">Total Referrals</div>
+                            </div>
+                            <div class="stat-card bg-white rounded-xl p-4 text-center shadow-md">
+                                <div class="text-2xl font-bold text-green-600 mb-1">₹{{ total_referral_earnings|floatformat:0 }}</div>
+                                <div class="text-xs text-gray-600">Earned</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Referrals -->
+                    {% if referred_users %}
+                        <div class="referral-card rounded-2xl p-6 shadow-lg shadow-black">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Recent Referrals</h3>
+                            <div class="space-y-3">
+                                {% for user in referred_users %}
+                                    <div class="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
+                                        <div class="w-8 h-8 bg-[#16213e] rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-white text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-semibold text-gray-900 text-sm">{{ user.full_name }}</div>
+                                            <div class="text-xs text-gray-600">{{ user.date_joined|date:"M d, Y" }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Quick Actions -->
+                    <div class="referral-card rounded-2xl p-6 shadow-lg shadow-black">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <a href="{% url 'user_profile' %}" class="flex items-center p-3 rounded-lg hover:bg-[#D2DBFF] transition-colors">
+                                <i class="fas fa-user text-[#16213e] w-5 mr-3"></i>
+                                <span class="font-medium">Back to Profile</span>
+                            </a>
+                            <a href="{% url 'user_orders' %}" class="flex items-center p-3 rounded-lg hover:bg-[#D2DBFF] transition-colors">
+                                <i class="fas fa-box text-[#16213e] w-5 mr-3"></i>
+                                <span class="font-medium">Order History</span>
+                            </a>
+                            <a href="{% url 'product_list' %}" class="flex items-center p-3 rounded-lg hover:bg-[#D2DBFF] transition-colors">
+                                <i class="fas fa-shopping-cart text-[#16213e] w-5 mr-3"></i>
+                                <span class="font-medium">Continue Shopping</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        // Custom alert function
+        function showCustomAlert(message, type = 'info') {
+            const existingAlerts = document.querySelectorAll('.custom-alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            const alert = document.createElement('div');
+            alert.className = `custom-alert ${type}`;
+            alert.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+                </div>
+            `;
+
+            document.body.appendChild(alert);
+            setTimeout(() => alert.classList.add('show'), 100);
+
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.classList.remove('show');
+                    setTimeout(() => alert.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Copy referral code
+        function copyReferralCode() {
+            const codeInput = document.getElementById('referralCode');
+            codeInput.select();
+            codeInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showCustomAlert('Referral code copied to clipboard!', 'success');
+            } catch (err) {
+                showCustomAlert('Failed to copy referral code', 'error');
+            }
+        }
+
+        // Copy referral link
+        function copyReferralLink() {
+            const linkInput = document.getElementById('referralLink');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showCustomAlert('Referral link copied to clipboard!', 'success');
+            } catch (err) {
+                showCustomAlert('Failed to copy referral link', 'error');
+            }
+        }
+
+        // Share via WhatsApp
+        function shareWhatsApp() {
+            const referralLink = document.getElementById('referralLink').value;
+            const message = `Hey! Join AZRION using my referral link and get amazing deals: ${referralLink}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Share via Email
+        function shareEmail() {
+            const referralLink = document.getElementById('referralLink').value;
+            const subject = 'Join AZRION - Exclusive Invitation';
+            const body = `Hi there!\n\nI'd like to invite you to join AZRION, an amazing online shopping platform.\n\nUse my referral link to sign up: ${referralLink}\n\nYou'll get access to great deals and I'll earn some rewards too!\n\nHappy Shopping!\n`;
+            
+            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        }
+
+        // Modern clipboard API fallback
+        if (navigator.clipboard) {
+            function copyReferralCode() {
+                const code = document.getElementById('referralCode').value;
+                navigator.clipboard.writeText(code).then(() => {
+                    showCustomAlert('Referral code copied to clipboard!', 'success');
+                }).catch(() => {
+                    showCustomAlert('Failed to copy referral code', 'error');
+                });
+            }
+
+            function copyReferralLink() {
+                const link = document.getElementById('referralLink').value;
+                navigator.clipboard.writeText(link).then(() => {
+                    showCustomAlert('Referral link copied to clipboard!', 'success');
+                }).catch(() => {
+                    showCustomAlert('Failed to copy referral link', 'error');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

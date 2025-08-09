@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Address - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-container {
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .input-field:focus {
+            border-color: #16213e;
+            box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+        }
+        
+        .input-field.error {
+            border-color: #ef4444;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-[#16213e]">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <div class="pt-20 min-h-screen">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <div class="flex items-center gap-4 mb-4">
+                    <a href="{% url 'manage_addresses' %}" class="text-[#16213e] hover:text-[#1e293b]">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <h1 class="text-4xl font-bold text-gray-300">Add New Address</h1>
+                </div>
+                <p class="text-gray-400">Fill in the details for your new shipping address</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="form-container bg-gray-300 rounded-2xl p-8 shadow-lg shadow-black" style="border: 1px solid rgb(206, 210, 219);">
+                <form method="POST" id="addAddressForm">
+                    {% csrf_token %}
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Full Name -->
+                        <div class="input-group">
+                            <label for="full_name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2"></i>Full Name
+                            </label>
+                            <input type="text" 
+                                   id="full_name" 
+                                   name="full_name" 
+                                   value="{{ form_data.full_name|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.full_name %}error{% endif %}"
+                                   placeholder="Enter recipient's full name"
+                                   required>
+                            {% if errors.full_name %}
+                                <div class="error-message">{{ errors.full_name }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="input-group">
+                            <label for="phone_number" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-phone mr-2"></i>Phone Number
+                            </label>
+                            <input type="tel" 
+                                   id="phone_number" 
+                                   name="phone_number" 
+                                   value="{{ form_data.phone_number|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.phone_number %}error{% endif %}"
+                                   placeholder="Enter phone number"
+                                   required>
+                            {% if errors.phone_number %}
+                                <div class="error-message">{{ errors.phone_number }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Address Line 1 -->
+                        <div class="input-group md:col-span-2">
+                            <label for="address_line_1" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2"></i>Address Line 1
+                            </label>
+                            <input type="text" 
+                                   id="address_line_1" 
+                                   name="address_line_1" 
+                                   value="{{ form_data.address_line_1|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.address_line_1 %}error{% endif %}"
+                                   placeholder="House number, street name"
+                                   required>
+                            {% if errors.address_line_1 %}
+                                <div class="error-message">{{ errors.address_line_1 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Address Line 2 -->
+                        <div class="input-group md:col-span-2">
+                            <label for="address_line_2" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2"></i>Address Line 2 (Optional)
+                            </label>
+                            <input type="text" 
+                                   id="address_line_2" 
+                                   name="address_line_2" 
+                                   value="{{ form_data.address_line_2|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg"
+                                   placeholder="Apartment, suite, building, etc.">
+                        </div>
+
+                        <!-- City -->
+                        <div class="input-group">
+                            <label for="city" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-city mr-2"></i>City
+                            </label>
+                            <input type="text" 
+                                   id="city" 
+                                   name="city" 
+                                   value="{{ form_data.city|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.city %}error{% endif %}"
+                                   placeholder="Enter city"
+                                   required>
+                            {% if errors.city %}
+                                <div class="error-message">{{ errors.city }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- State -->
+                        <div class="input-group">
+                            <label for="state" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-pin mr-2"></i>State
+                            </label>
+                            <input type="text" 
+                                   id="state" 
+                                   name="state" 
+                                   value="{{ form_data.state|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.state %}error{% endif %}"
+                                   placeholder="Enter state"
+                                   required>
+                            {% if errors.state %}
+                                <div class="error-message">{{ errors.state }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Postal Code -->
+                        <div class="input-group">
+                            <label for="postal_code" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-mail-bulk mr-2"></i>Postal Code
+                            </label>
+                            <input type="text" 
+                                   id="postal_code" 
+                                   name="postal_code" 
+                                   value="{{ form_data.postal_code|default:'' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.postal_code %}error{% endif %}"
+                                   placeholder="Enter postal code"
+                                   required>
+                            {% if errors.postal_code %}
+                                <div class="error-message">{{ errors.postal_code }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Country -->
+                        <div class="input-group">
+                            <label for="country" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-globe mr-2"></i>Country
+                            </label>
+                            <input type="text" 
+                                   id="country" 
+                                   name="country" 
+                                   value="{{ form_data.country|default:'India' }}"
+                                   class="input-field w-full px-4 py-3 rounded-lg {% if errors.country %}error{% endif %}"
+                                   placeholder="Enter country"
+                                   required>
+                            {% if errors.country %}
+                                <div class="error-message">{{ errors.country }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Address Type -->
+                        <div class="input-group md:col-span-2">
+                            <label for="address_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-tag mr-2"></i>Address Type
+                            </label>
+                            <select id="address_type" name="address_type" 
+                                    class="input-field w-full px-4 py-3 rounded-lg">
+                                <option value="home" {% if form_data.address_type == 'home' %}selected{% endif %}>Home</option>
+                                <option value="work" {% if form_data.address_type == 'work' %}selected{% endif %}>Work</option>
+                                <option value="other" {% if form_data.address_type == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Set as Default -->
+                        <div class="md:col-span-2 flex items-center mt-4">
+                            <input type="checkbox" id="is_default" name="is_default" 
+                                   class="h-5 w-5 text-[#16213e] rounded focus:ring-[#16213e]"
+                                   {% if form_data.is_default %}checked{% endif %}>
+                            <label for="is_default" class="ml-2 block text-sm text-gray-900">
+                                Set as default address
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                        <button type="submit" 
+                                class="flex-1 bg-[#16213e] text-white py-3 px-6 rounded-lg hover:bg-[#1e293b] transition-colors font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Add Address
+                        </button>
+                        <a href="{% url 'manage_addresses' %}" 
+                           class="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-400 transition-colors font-semibold text-center">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        document.getElementById('addAddressForm').addEventListener('submit', function(e) {
+            const fullName = document.getElementById('full_name').value.trim();
+            const phoneNumber = document.getElementById('phone_number').value.trim();
+            const addressLine1 = document.getElementById('address_line_1').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const state = document.getElementById('state').value.trim();
+            const postalCode = document.getElementById('postal_code').value.trim();
+            const country = document.getElementById('country').value.trim();
+            
+            let hasError = false;
+            
+            // Clear previous errors
+            document.querySelectorAll('.input-field').forEach(field => {
+                field.classList.remove('error');
+            });
+            document.querySelectorAll('.error-message').forEach(error => {
+                error.remove();
+            });
+            
+            // Validate full name
+            if (!/^[A-Za-z ]+$/.test(fullName)) {
+                showError('full_name', 'Name must contain only letters and spaces.');
+                hasError = true;
+            }
+            
+            // Validate phone number
+            if (!/^[0-9]{10,15}$/.test(phoneNumber)) {
+                showError('phone_number', 'Enter a valid 10-15 digit phone number.');
+                hasError = true;
+            }
+            
+            // Validate address line 1
+            if (!addressLine1) {
+                showError('address_line_1', 'Address line 1 is required.');
+                hasError = true;
+            }
+            
+            // Validate city
+            if (!city) {
+                showError('city', 'City is required.');
+                hasError = true;
+            }
+            
+            // Validate state
+            if (!state) {
+                showError('state', 'State is required.');
+                hasError = true;
+            }
+            
+            // Validate postal code
+            if (!/^[0-9]{6}$/.test(postalCode)) {
+                showError('postal_code', 'Enter a valid 6-digit postal code.');
+                hasError = true;
+            }
+            
+            // Validate country
+            if (!country) {
+                showError('country', 'Country is required.');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                e.preventDefault();
+            }
+        });
+        
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            field.classList.add('error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            field.parentNode.appendChild(errorDiv);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Hide Scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        html {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, rgb(70, 75, 119) 0%, rgb(70, 75, 119) 0%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-effect {
+            background: #16213e93;
+            backdrop-filter: blur(7px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9a9ca105, rgba(238, 233, 255, 1), #9a9ca105);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Custom Button Hover Effects */
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 12px;
+        }
+
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, rgb(51, 59, 82), rgb(39, 52, 87));
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgb(23, 29, 59) 0%, rgb(23, 29, 59) 0%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Product Card Hover Effects */
+        .product-card {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 30px 60px rgba(22, 33, 62, 0.2);
+        }
+
+        .product-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .product-card:hover .product-overlay {
+            opacity: 1;
+        }
+
+        .feature-card {
+            transition: all 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+
+        /* Price Animation */
+        .price-highlight {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if coupon.is_active %}Deactivate{% else %}Activate{% endif %} Coupon | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex items-center mb-4">
+                <a href="{% url 'coupon_list' %}" class="text-navy hover:text-navy-dark mr-4">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">
+                        {% if coupon.is_active %}Deactivate{% else %}Activate{% endif %} Coupon
+                    </h2>
+                    <p class="text-gray-600">Confirm coupon status change</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl">
+            <div class="flex items-center mb-6">
+                <div class="p-3 rounded-full {% if coupon.is_active %}bg-red-100{% else %}bg-green-100{% endif %} mr-4">
+                    <i class="fas {% if coupon.is_active %}fa-pause-circle text-2xl text-red-600{% else %}fa-play-circle text-2xl text-green-600{% endif %}"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Confirm Status Change</h3>
+                    <p class="text-gray-600">
+                        {% if coupon.is_active %}
+                            This will deactivate the coupon and prevent new usage
+                        {% else %}
+                            This will activate the coupon and allow new usage
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Coupon Details -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-gray-900 mb-3">Coupon Details:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium text-gray-700">Code:</span>
+                        <span class="ml-2 font-mono bg-gray-200 px-2 py-1 rounded">{{ coupon.code }}</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700">Discount:</span>
+                        <span class="ml-2">
+                            {% if coupon.discount_type == 'percentage' %}
+                                {{ coupon.discount_value }}%
+                            {% else %}
+                                ₹{{ coupon.discount_value }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700">Usage Count:</span>
+                        <span class="ml-2">{{ usage_count }} times</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700">Current Status:</span>
+                        <span class="ml-2">
+                            {% if coupon.is_active %}
+                                <span class="text-green-600 font-semibold">Active</span>
+                            {% else %}
+                                <span class="text-red-600 font-semibold">Inactive</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700">Valid Until:</span>
+                        <span class="ml-2">{{ coupon.valid_until|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700">Usage Limit:</span>
+                        <span class="ml-2">
+                            {% if coupon.usage_limit %}
+                                {{ coupon.usage_limit }}
+                            {% else %}
+                                Unlimited
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if coupon.description %}
+                <div class="mt-3">
+                    <span class="font-medium text-gray-700">Description:</span>
+                    <p class="ml-2 text-gray-600">{{ coupon.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Info Message -->
+            <div class="{% if coupon.is_active %}bg-yellow-50 border-l-4 border-yellow-400{% else %}bg-blue-50 border-l-4 border-blue-400{% endif %} p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas {% if coupon.is_active %}fa-exclamation-triangle text-yellow-400{% else %}fa-info-circle text-blue-400{% endif %}"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm {% if coupon.is_active %}text-yellow-700{% else %}text-blue-700{% endif %}">
+                            {% if coupon.is_active %}
+                                <strong>Note:</strong> Deactivating this coupon will prevent customers from using it for new orders. 
+                                Existing orders that already used this coupon will not be affected.
+                            {% else %}
+                                <strong>Note:</strong> Activating this coupon will allow customers to use it for new orders, 
+                                provided it hasn't expired and hasn't reached its usage limit.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <form method="post" class="flex flex-col sm:flex-row gap-4">
+                {% csrf_token %}
+                {% if coupon.is_active %}
+                    <button type="submit" name="action" value="deactivate" 
+                            class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all flex-1 sm:flex-none">
+                        <i class="fas fa-pause mr-2"></i>Deactivate Coupon
+                    </button>
+                {% else %}
+                    <button type="submit" name="action" value="activate" 
+                            class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all flex-1 sm:flex-none">
+                        <i class="fas fa-play mr-2"></i>Activate Coupon
+                    </button>
+                {% endif %}
+                <a href="{% url 'coupon_list' %}" 
+                   class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all text-center">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveNavItem('coupons');
+        });
+
+        function setActiveNavItem(currentPage) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+        }
+    </script>
+</body>
+</html>

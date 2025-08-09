@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - {{ order.order_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .order-summary-card {
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .order-item-card {
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .order-item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-confirmed { background: #dbeafe; color: #1e40af; }
+        .status-processing { background: #e0e7ff; color: #3730a3; }
+        .status-shipped { background: #dcfce7; color: #166534; }
+        .status-delivered { background: #d1fae5; color: #065f46; }
+        .status-cancelled { background: #fee2e2; color: #dc2626; }
+        .status-returned { background: #f3e8ff; color: #7c3aed; }
+
+        /* Item status badges */
+        .item-status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .item-status-active { background: #d1fae5; color: #065f46; }
+        .item-status-cancelled { background: #fee2e2; color: #dc2626; }
+        .item-status-returned { background: #f3e8ff; color: #7c3aed; }
+
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #16213e 0%, #1e293b 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(22, 33, 62, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(22, 33, 62, 0.2);
+        }
+
+        .btn-destructive {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+        }
+
+        .btn-destructive:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            color: #4b5563;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .return-modal-content {
+            text-align: left;
+        }
+
+        .return-modal-content textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .return-modal-content textarea:focus {
+            outline: none;
+            border-color: #16213e;
+            box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+        }
+
+        /* Custom alert styles */
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-alert.show {
+            transform: translateX(0);
+        }
+
+        .custom-alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .custom-alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body class="bg-[#16213e] min-h-screen">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <div class="pt-20 min-h-screen">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <div class="flex items-center gap-4 mb-4">
+                    <a href="{% url 'user_orders' %}" class="text-[#16213e] hover:text-[#1e293b]">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <h1 class="text-4xl font-bold text-gray-300">Order #{{ order.order_number }}</h1>
+                </div>
+                <p class="text-gray-400">Details of your order</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Order Summary & Items -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="order-summary-card bg-[#e3e8ff] shadow-lg shadow-black">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Order Summary</h2>
+                        <div class="grid grid-cols-2 gap-4 text-gray-700 text-sm mb-6">
+                            <div>
+                                <p><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y" }}</p>
+                                <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+                            </div>
+                            <div>
+                                <p><strong>Status:</strong> <span class="status-badge status-{{ order.get_order_status }}">{{ order.get_order_status|title }}</span></p>
+                                <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Items in this Order</h3>
+                        <div class="space-y-4">
+                            {% for item in order_items %}
+                                <div class="order-item-card bg-[#dce6fc] shadow-lg shadow-gray-400">
+                                    {% if item.variant.images.first %}
+                                        <img src="{{ item.variant.images.first.image.url }}" alt="{{ item.product.product_name }}" class="w-16 h-16 object-cover rounded-md">
+                                    {% elif item.product.get_main_image %}
+                                        <img src="{{ item.product.get_main_image.url }}" alt="{{ item.product.product_name }}" class="w-16 h-16 object-cover rounded-md">
+                                    {% else %}
+                                        <div class="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">
+                                            <i class="fas fa-image text-gray-400"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h4 class="text-lg font-semibold text-gray-900">{{ item.product.product_name }}</h4>
+                                            <span class="item-status-badge item-status-{{ item.status }}">{{ item.get_status_display }}</span>
+                                        </div>
+                                        <p class="text-gray-600 text-sm">Variant: {{ item.variant.get_color_display }}</p>
+                                        <p class="text-gray-600 text-sm">Quantity: {{ item.quantity }}</p>
+                                        <p class="text-sm text-gray-600">Price: ₹{{ item.price }} each</p>
+                                        
+                                        <!-- Item Actions -->
+                                        {% if item.status == 'active' %}
+                                        <div class="flex gap-2 mt-3">
+                                            {% if item.can_be_cancelled %}
+                                            <button type="button" onclick="showCancelItemModal('{{ item.id }}', '{{ item.product.product_name }}')"
+                                                    class="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 transition-all">
+                                                <i class="fas fa-times mr-1"></i>Cancel Item
+                                            </button>
+                                            {% endif %}
+                                            
+                                            {% if item.can_be_returned %}
+                                            <button type="button" onclick="openItemReturnModal('{{ item.id }}', '{{ item.product.product_name }}')"
+                                                    class="text-sm bg-orange-100 text-orange-600 px-3 py-1 rounded hover:bg-orange-200 transition-all">
+                                                <i class="fas fa-undo mr-1"></i>Return Item
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                        {% elif item.return_request %}
+                                        <div class="mt-3">
+                                            <span class="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded">
+                                                Return {{ item.return_request.get_status_display }}
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="text-right">
+                                        <p class="font-semibold text-gray-900">₹{{ item.get_total_price }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Address & Actions -->
+                <div class="lg:col-span-1 space-y-6">
+                    {% if order.shipping_address %}
+                        <div class="order-summary-card bg-[#dce6fc] shadow-lg shadow-black">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Shipping Address</h2>
+                            <div class="text-gray-700 text-base">
+                                <p class="font-semibold">{{ order.shipping_address.full_name }}</p>
+                                <p>{{ order.shipping_address.address_line_1 }}</p>
+                                {% if order.shipping_address.address_line_2 %}
+                                    <p>{{ order.shipping_address.address_line_2 }}</p>
+                                {% endif %}
+                                <p>{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}</p>
+                                <p>{{ order.shipping_address.country }}</p>
+                                <p class="mt-2"><i class="fas fa-phone mr-2"></i>{{ order.shipping_address.phone_number }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="order-summary-card bg-[#dce6fc] shadow-lg shadow-black">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Order Actions</h2>
+                        <div class="flex flex-col gap-4">
+                            <a href="{% url 'user_orders' %}" class="btn-secondary text-[#16213e] bg-gray-100 hover:bg-gray-200 shadow-lg shadow-gray-400 w-full">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Back to Orders
+                            </a>
+                            
+                            <a href="{% url 'download_invoice' order.id %}" class="btn-primary w-full">
+                                <i class="fas fa-download mr-2"></i>
+                                Download Invoice
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <!-- Cancel Item Confirmation Modal -->
+    <div id="cancelItemModal" class="modal-overlay">
+        <div class="modal-content">
+            <h4>Cancel Item</h4>
+            <p id="cancelItemMessage">Are you sure you want to cancel this item?</p>
+            <div class="mb-4">
+                <textarea id="cancelItemReason" placeholder="Please provide a reason for cancellation..." 
+                          class="w-full p-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" onclick="closeCancelItemModal()" class="btn-secondary bg-gray-200 hover:bg-gray-300 text-[#16213e]">No, Keep Item</button>
+                <button type="button" onclick="confirmCancelItem()" class="btn-destructive text-red-600 bg-red-100 hover:bg-red-300">Yes, Cancel Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Item Request Modal -->
+    <div id="returnItemModal" class="modal-overlay">
+        <div class="modal-content return-modal-content">
+            <h4>Request Item Return</h4>
+            <form id="returnItemForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Item</label>
+                    <p id="returnItemName" class="text-sm text-gray-600 bg-gray-50 p-2 rounded"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="returnItemReason" class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Return <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="returnItemReason" name="reason" rows="4" required
+                              placeholder="Please provide a detailed reason for returning this item (minimum 10 characters)..."></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Minimum 10 characters required</p>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeReturnItemModal()" class="btn-secondary bg-gray-200 hover:bg-gray-300 text-[#16213e]">Cancel</button>
+                    <button type="submit" class="btn-destructive bg-orange-100 text-orange-600 hover:bg-orange-200">
+                        <i class="fas fa-undo mr-2"></i>Submit Return Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentItemId = null;
+
+        // Custom alert function
+        function showCustomAlert(message, type = 'info') {
+            const existingAlerts = document.querySelectorAll('.custom-alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            const alert = document.createElement('div');
+            alert.className = `custom-alert ${type}`;
+            alert.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+                </div>
+            `;
+            document.body.appendChild(alert);
+
+            setTimeout(() => alert.classList.add('show'), 100);
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.classList.remove('show');
+                    setTimeout(() => alert.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Cancel Item Modal Functions
+        function showCancelItemModal(itemId, itemName) {
+            currentItemId = itemId;
+            document.getElementById('cancelItemMessage').textContent = `Are you sure you want to cancel "${itemName}"?`;
+            document.getElementById('cancelItemModal').classList.add('active');
+        }
+
+        function closeCancelItemModal() {
+            document.getElementById('cancelItemModal').classList.remove('active');
+            currentItemId = null;
+            document.getElementById('cancelItemReason').value = '';
+        }
+
+        function confirmCancelItem() {
+            const reason = document.getElementById('cancelItemReason').value.trim();
+            
+            if (!reason) {
+                showCustomAlert('Please provide a reason for cancellation', 'error');
+                return;
+            }
+
+            if (currentItemId) {
+                fetch(`/cancel-item/${currentItemId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        reason: reason
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showCustomAlert(data.message, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showCustomAlert(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showCustomAlert('An error occurred while cancelling the item', 'error');
+                });
+            }
+            closeCancelItemModal();
+        }
+
+        // Return Item Modal Functions
+        function openItemReturnModal(itemId, itemName) {
+            currentItemId = itemId;
+            document.getElementById('returnItemModal').classList.add('active');
+            document.getElementById('returnItemName').textContent = itemName;
+            document.getElementById('returnItemReason').value = '';
+            setTimeout(() => {
+                document.getElementById('returnItemReason').focus();
+            }, 300);
+        }
+
+        function closeReturnItemModal() {
+            document.getElementById('returnItemModal').classList.remove('active');
+            currentItemId = null;
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('cancelItemModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCancelItemModal();
+            }
+        });
+
+        document.getElementById('returnItemModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReturnItemModal();
+            }
+        });
+
+        // Handle return item form submission
+        document.getElementById('returnItemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const reason = document.getElementById('returnItemReason').value.trim();
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            if (!reason) {
+                showCustomAlert('Please provide a reason for return', 'error');
+                return;
+            }
+
+            if (reason.length < 10) {
+                showCustomAlert('Please provide a detailed reason (at least 10 characters)', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+            fetch(`/return-item/${currentItemId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    reason: reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showCustomAlert(data.message, 'success');
+                    closeReturnItemModal();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showCustomAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showCustomAlert('An error occurred while submitting return request', 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-undo mr-2"></i>Submit Return Request';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+        {% include 'nav_style.html' %}
+        </head>
+        <body class="bg-light-gray min-h-screen">
+        {% include 'nav.html' %}
+
+        <!-- Main Content - Adjusted for sticky navbar -->
+        <div class="flex-1 p-4 md:p-8 md:ml-64">
+            <!-- Header Section -->
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-3xl font-bold text-navy mb-2">Registered Users</h2>
+                        <p class="text-gray-600">Manage and monitor user accounts</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards - Updated to use Django data -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <!-- Total Users Card -->
+                <div class="bg-white rounded-lg shadow p-4 text-center stats-card hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-center mb-2">
+                        <div class="p-2 rounded-full bg-blue-100">
+                            <i class="fas fa-users text-lg text-blue-600 stats-icon"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xs text-gray-500 mb-1">Total Users</h3>
+                    <p class="text-xl font-bold text-gray-900">{{ users.paginator.count }}</p>
+                </div>
+
+                <!-- Active Users Card -->
+                <div class="bg-white rounded-lg shadow p-4 text-center stats-card hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-center mb-2">
+                        <div class="p-2 rounded-full bg-green-100">
+                            <i class="fas fa-user-check text-lg text-green-600 stats-icon"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xs text-gray-500 mb-1">Active Users</h3>
+                    <p class="text-xl font-bold text-green-600">{{ active_count }}</p>
+                </div>
+
+                <!-- Blocked Users Card -->
+                <div class="bg-white rounded-lg shadow p-4 text-center stats-card hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-center mb-2">
+                        <div class="p-2 rounded-full bg-red-100">
+                            <i class="fas fa-user-times text-lg text-red-600 stats-icon"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xs text-gray-500 mb-1">Blocked Users</h3>
+                    <p class="text-xl font-bold text-red-600">{{ blocked_count }}</p>
+                </div>
+            </div>
+
+            <!-- Enhanced Search Form with Filters -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <form method="get" action="{% url 'user_management' %}" class="mb-6 flex flex-wrap items-center gap-4">
+                    <input type="text" name="q" placeholder="Search by name, email, or phone..." value="{{ query }}"
+                        class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent min-w-64" />
+                    
+                    <select name="status" class="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                        <option value="all" {% if status == 'all' %}selected{% endif %}>All Status</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="blocked" {% if status == 'blocked' %}selected{% endif %}>Blocked</option>
+                    </select>
+                    
+                    <select name="sort" class="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Newest First</option>
+                        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                    
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-filter mr-2"></i>Apply Filters
+                    </button>
+                    
+                    <button type="button" onclick="window.location.href='{% url 'user_management' %}'"
+                        class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg transition-all">
+                        <i class="fas fa-times mr-2"></i>Clear All
+                    </button>
+                </form>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="table-container">
+                    <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-user mr-2"></i>Name
+                                </th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-envelope mr-2"></i>Email
+                                </th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-phone mr-2"></i>Phone
+                                </th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-calendar-plus mr-2"></i>Created Date
+                                </th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-info-circle mr-2"></i>Status
+                                </th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-cogs mr-2"></i>Action
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            {% for user in users %}
+                            <tr class="border-t table-row">
+                                <td class="py-3 px-4 text-gray-800">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
+                                        {{ user.full_name }}
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-gray-800">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-at text-gray-400 mr-2"></i>
+                                        {{ user.email }}
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-gray-800">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-mobile-alt text-gray-400 mr-2"></i>
+                                        {{ user.ph_number }}
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-gray-800">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar text-gray-400 mr-2"></i>
+                                        <div>
+                                            <div class="text-sm font-medium">{{ user.created_at|date:"M d, Y" }}</div>
+                                            <div class="text-xs text-gray-500">{{ user.created_at|date:"g:i A" }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-gray-800">
+                                    {% if user.is_active %}
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full status-badge bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Active
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full status-badge bg-red-100 text-red-800">
+                                        <i class="fas fa-times-circle mr-1"></i>Blocked
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4">
+                                    {% if user.is_active %}
+                                    <button class="action-btn inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full action-badge bg-red-100 text-red-800 hover:bg-red-200 transition-all"
+                                            data-action="block" 
+                                            data-user="{{ user.full_name }}" 
+                                            data-url="{% url 'block_user' user.id %}">
+                                        <i class="fas fa-ban mr-1"></i>Block
+                                    </button>
+                                    {% else %}
+                                    <button class="action-btn inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full action-badge bg-green-100 text-green-800 hover:bg-green-200 transition-all"
+                                            data-action="unblock" 
+                                            data-user="{{ user.full_name }}" 
+                                            data-url="{% url 'unblock_user' user.id %}">
+                                        <i class="fas fa-unlock mr-1"></i>Unblock
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-6 text-gray-500">
+                                    <i class="fas fa-users text-4xl text-gray-300 mb-2"></i>
+                                    <p>No users found.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if users.has_other_pages %}
+            <div class="flex justify-center mt-6">
+                <nav class="inline-flex rounded-md shadow-sm">
+                    {% if users.has_previous %}
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if status != 'all' %}status={{ status }}&{% endif %}{% if sort_order != 'desc' %}sort={{ sort_order }}&{% endif %}page={{ users.previous_page_number }}"
+                           class="px-3 py-2 bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-l-md">
+                            Previous
+                        </a>
+                    {% else %}
+                        <span class="px-3 py-2 bg-gray-100 border border-gray-300 text-sm font-medium text-gray-400 rounded-l-md">
+                            Previous
+                        </span>
+                    {% endif %}
+
+                    {% for num in users.paginator.page_range %}
+                        {% if users.number == num %}
+                            <span class="px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm font-semibold">
+                                {{ num }}
+                            </span>
+                        {% else %}
+                            <a href="?{% if query %}q={{ query }}&{% endif %}{% if status != 'all' %}status={{ status }}&{% endif %}{% if sort_order != 'desc' %}sort={{ sort_order }}&{% endif %}page={{ num }}"
+                               class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if users.has_next %}
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if status != 'all' %}status={{ status }}&{% endif %}{% if sort_order != 'desc' %}sort={{ sort_order }}&{% endif %}page={{ users.next_page_number }}"
+                           class="px-3 py-2 bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-r-md">
+                            Next
+                        </a>
+                    {% else %}
+                        <span class="px-3 py-2 bg-gray-100 border border-gray-300 text-sm font-medium text-gray-400 rounded-r-md">
+                            Next
+                        </span>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 modal-overlay hidden z-50">
+        <div class="modal-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <div class="text-center">
+                <!-- Modal Icon -->
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" id="modalIconContainer">
+                    <i id="modalIcon" class="text-2xl"></i>
+                </div>
+                <!-- Modal Title -->
+                <h3 class="text-lg font-semibold text-gray-900 mb-2" id="modalTitle">Confirm Action</h3>
+                <!-- Modal Message -->
+                <p class="text-sm text-gray-600 mb-6" id="modalMessage">Are you sure you want to perform this action?</p>
+                <!-- Modal Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <button id="cancelBtn" class="modal-button flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-medium">
+                        <i class="fas fa-times mr-2"></i>No, Cancel
+                    </button>
+                    <button id="confirmBtn" class="modal-button flex-1 px-4 py-2 text-white rounded-lg font-medium">
+                        <i id="confirmIcon" class="mr-2"></i>
+                        <span id="confirmText">Yes, Confirm</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        // Modal Elements
+        const confirmationModal = document.getElementById('confirmationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalIconContainer = document.getElementById('modalIconContainer');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const confirmIcon = document.getElementById('confirmIcon');
+        const confirmText = document.getElementById('confirmText');
+
+        let currentActionUrl = '';
+        let currentActionType = '';
+
+        // Sidebar functionality
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        });
+
+        // Modal functionality
+        function showConfirmationModal(action, userName, actionUrl) {
+            currentActionUrl = actionUrl;
+            currentActionType = action;
+
+            if (action === 'block') {
+                modalTitle.textContent = 'Block User';
+                modalMessage.textContent = `Are you sure you want to block "${userName}"? This user will no longer be able to access their account.`;
+                modalIcon.className = 'fas fa-ban text-red-600';
+                modalIconContainer.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 bg-red-100';
+                confirmBtn.className = 'modal-button flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium';
+                confirmIcon.className = 'fas fa-ban mr-2';
+                confirmText.textContent = 'Yes, Block User';
+            } else {
+                modalTitle.textContent = 'Unblock User';
+                modalMessage.textContent = `Are you sure you want to unblock "${userName}"? This user will regain access to their account.`;
+                modalIcon.className = 'fas fa-unlock text-green-600';
+                modalIconContainer.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 bg-green-100';
+                confirmBtn.className = 'modal-button flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium';
+                confirmIcon.className = 'fas fa-unlock mr-2';
+                confirmText.textContent = 'Yes, Unblock User';
+            }
+
+            confirmationModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideConfirmationModal() {
+            confirmationModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            currentActionUrl = '';
+            currentActionType = '';
+        }
+
+        // Event listeners for action buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.action-btn')) {
+                e.preventDefault();
+                const button = e.target.closest('.action-btn');
+                const action = button.dataset.action;
+                const userName = button.dataset.user;
+                const actionUrl = button.dataset.url;
+
+                showConfirmationModal(action, userName, actionUrl);
+            }
+        });
+
+        // Modal event listeners
+        confirmBtn.addEventListener('click', function() {
+            if (currentActionUrl) {
+                // Redirect to the Django URL to perform the action
+                window.location.href = currentActionUrl;
+            }
+            hideConfirmationModal();
+        });
+
+        cancelBtn.addEventListener('click', hideConfirmationModal);
+
+        // Close modal when clicking outside
+        confirmationModal.addEventListener('click', function(e) {
+            if (e.target === confirmationModal) {
+                hideConfirmationModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !confirmationModal.classList.contains('hidden')) {
+                hideConfirmationModal();
+            }
+        });
+    </script>
+    {% include 'navigation_scripts.html' %}
+</body>
+</html>

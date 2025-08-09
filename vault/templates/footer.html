@@ -1,0 +1,136 @@
+<footer id="footer" class="bg-[#16213e] text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-bold uppercase tracking-widest text-gray-300"
+                        style="font-family: 'Playfair Display', serif;">AZRION</h3>
+                    <p class="text-gray-400">
+                        Crafting exceptional timepieces for the discerning collector since 1970.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg mb-4">Collections</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Royal Collection</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Sports Series</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Business Elite</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Limited Editions</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg mb-4">Services</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Watch Servicing</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Custom Design</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Authentication</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Insurance</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Size Guide</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Care Instructions</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Warranty</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 AZRION. All rights reserved. | Luxury Timepieces Since 1970</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Loading Screen
+        window.addEventListener('load', function () {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }, 1000);
+        });
+
+        // Smooth Scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced product card interactions
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('mouseenter', function () {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+                this.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.15)';
+            });
+
+            card.addEventListener('mouseleave', function () {
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = '';
+            });
+        });
+
+        // Tilt card effect
+        document.querySelectorAll('.tilt-card').forEach((card) => {
+            const inner = card.querySelector('.tilt-inner');
+            let requestId;
+
+            function animate(e) {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * 8;
+                const rotateY = ((x - centerX) / centerX) * -8;
+
+                inner.style.transform = `scale(1.05) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }
+
+            card.addEventListener('mousemove', (e) => {
+                if (requestId) cancelAnimationFrame(requestId);
+                requestId = requestAnimationFrame(() => animate(e));
+            });
+
+            card.addEventListener('mouseleave', () => {
+                inner.style.transition = 'transform 0.4s ease';
+                inner.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+            });
+
+            card.addEventListener('mouseenter', () => {
+                inner.style.transition = 'none';
+            });
+        });
+
+        // Price highlight animation
+        setInterval(() => {
+            document.querySelectorAll('.price-highlight').forEach(price => {
+                price.style.animation = 'none';
+                setTimeout(() => {
+                    price.style.animation = 'pulse 2s infinite';
+                }, 10);
+            });
+        }, 10000);
+    </script>

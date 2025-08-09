@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Wishlist - Chronovault</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% include 'style.html' %} {# Assuming style.html contains your custom Tailwind config and base styles #}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Modern Button Styles (consistent with product_details.html) */
+    .btn-primary {
+        background: linear-gradient(135deg, #16213e 0%, #1e293b 100%);
+        color: white;
+        padding: 0.6rem 1.2rem; /* Base padding for primary buttons */
+        border-radius: 0.4rem; /* Slightly smaller border-radius */
+        font-weight: 600;
+        font-size: 0.875rem; /* text-sm */
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex; /* For icon alignment */
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(22, 33, 62, 0.3); /* Adjusted shadow */
+    }
+
+    .btn-secondary {
+        border: 1px solid #16213e; /* Thinner border */
+        color: #16213e;
+        padding: 0.4rem 0.8rem; /* Base padding for secondary buttons */
+        border-radius: 0.4rem; /* Consistent small border-radius */
+        font-weight: 600;
+        font-size: 0.75rem; /* text-xs */
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex; /* For icon alignment */
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-secondary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: #16213e;
+        transition: left 0.3s ease;
+        z-index: -1;
+    }
+    .btn-secondary:hover::before {
+        left: 0;
+    }
+    .btn-secondary:hover {
+        color: white;
+        transform: translateY(-1px); /* Slightly less lift */
+        box-shadow: 0 5px 15px rgba(22, 33, 62, 0.2); /* Adjusted shadow */
+    }
+
+    /* Enhanced Destructive button style for "Clear Wishlist" - now more compact */
+    .btn-destructive {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); /* Red-700 to Red-600 gradient */
+        color: white;
+        padding: 0.4rem 0.8rem; /* Consistent small padding */
+        border-radius: 0.4rem; /* Consistent small border-radius */
+        font-weight: 600;
+        font-size: 0.75rem; /* text-xs */
+        transition: all 0.3s ease; /* Unified transition for all properties */
+        display: inline-flex; /* For icon alignment */
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15); /* Subtle initial shadow for depth */
+    }
+    .btn-destructive:hover {
+        background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); /* Darker red gradient on hover */
+        transform: translateY(-1px); /* Gentle lift on hover */
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); /* Stronger shadow on hover */
+    }
+
+    /* Wishlist card specific styles - Slightly larger */
+    .wishlist-card {
+        border-radius: 10px; /* Slightly larger radius */
+        padding: 12px 16px; /* Increased padding */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); /* Lighter, more diffused shadow */
+        transition: all 0.2s ease-in-out;
+        display: flex;
+        align-items: center;
+        gap: 12px; /* Increased gap between elements */
+    }
+    .wishlist-card:hover {
+        transform: translateY(3px); /* Gentle lift on hover */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Slightly stronger shadow on hover */
+    }
+    .product-image {
+        width: 70px; /* Increased image size */
+        height: 70px;
+        object-fit: cover;
+        border-radius: 6px; /* Slightly larger radius for image */
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.03);
+    }
+    .product-details {
+        flex-grow: 1; /* Allows details to take available space */
+    }
+    .product-details h3 {
+        font-size: 0.95rem; /* Slightly larger than base */
+        font-weight: 700; /* font-bold */
+        color: #1f2937; /* gray-900 */
+        margin-bottom: 2px; /* Tighter spacing */
+        line-height: 1.2; /* Tighter line height */
+    }
+    .product-details p {
+        font-size: 0.8rem; /* Slightly larger text */
+        color: #6b7280; /* gray-600 */
+        margin-bottom: 2px;
+    }
+    .product-details .price {
+        font-size: 0.95rem; /* Slightly larger than base */
+        font-weight: 700; /* font-semibold */
+        color: #16213e;
+    }
+    .wishlist-actions {
+        display: flex;
+        flex-direction: column; /* Always stack buttons */
+        gap: 6px; /* Space between Add to Cart and the View/Remove group */
+        flex-shrink: 0; /* Prevent actions from shrinking */
+        width: 150px; /* Fixed width for the button container (kept from previous iteration) */
+    }
+    /* Specific styles for buttons within wishlist-actions (kept from previous iteration) */
+    .wishlist-actions .btn-primary {
+        padding: 0.4rem 0.8rem; /* Smaller padding for Add to Cart */
+        font-size: 0.75rem; /* text-xs */
+    }
+    .wishlist-actions .btn-secondary {
+        padding: 0.3rem 0.6rem; /* Even smaller padding for View/Remove */
+        font-size: 0.6875rem; /* Custom smaller font size */
+    }
+    .wishlist-actions .btn-primary,
+    .wishlist-actions .btn-secondary {
+        width: 100%; /* Make buttons take full width within their constrained container */
+    }
+    /* Empty Wishlist State */
+    .empty-wishlist-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+    .empty-wishlist-card .fas.fa-heart {
+        color: #9ca3af; /* Gray-400 for a softer look */
+    }
+
+    /* Confirmation Modal Styles */
+    .confirmation-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6); /* Darker overlay */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .confirmation-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .confirmation-modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+    }
+    .confirmation-modal-overlay.active .confirmation-modal-content {
+        transform: translateY(0);
+    }
+    .confirmation-modal-content h4 {
+        font-size: 1.25rem; /* text-xl */
+        font-weight: 700; /* font-bold */
+        color: #1f2937; /* gray-900 */
+        margin-bottom: 1rem;
+    }
+    .confirmation-modal-content p {
+        font-size: 1rem; /* text-base */
+        color: #4b5563; /* gray-700 */
+        margin-bottom: 1.5rem;
+    }
+    .confirmation-modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    .confirmation-modal-buttons .btn-destructive,
+    .confirmation-modal-buttons .btn-secondary {
+        padding: 0.6rem 1.5rem; /* Adjusted padding for modal buttons */
+        font-size: 1rem; /* text-base */
+        border-radius: 0.5rem;
+    }
+
+    /* Loading overlay styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        display: none; /* Hidden by default */
+    }
+    .loading-spinner {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #16213e;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Toast notification styles */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    }
+    .toast.success {
+        background: #10b981; /* Green-500 */
+    }
+    .toast.error {
+        background: #ef4444; /* Red-500 */
+    }
+    @keyframes slideIn {
+        from {transform: translateX(100%); opacity: 0;}
+        to {transform: translateX(0); opacity: 1;}
+    }
+</style>
+</head>
+<body class="bg-[#16213e] min-h-screen">
+  <!-- Navigation -->
+  {% include 'navigation.html' %}
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+      <div class="loading-spinner">
+          <div class="spinner"></div>
+          <span>Processing...</span>
+      </div>
+  </div>
+
+  <div class="pt-20 min-h-screen">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <!-- Page Header -->
+          <div class="mb-8">
+              <h1 class="text-4xl font-bold text-gray-300 mb-2">My Wishlist</h1>
+              <p class="text-gray-400">Your saved items for later</p>
+          </div>
+
+          <!-- Messages -->
+          {% if messages %}
+              {% for message in messages %}
+                  <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                      <div class="flex items-center">
+                          <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                          {{ message }}
+                      </div>
+                  </div>
+              {% endfor %}
+          {% endif %}
+
+          <!-- Wishlist Items -->
+          {% if wishlist_items %}
+              <div class="rounded-xl bg-gray-300 shadow-lg shadow-black p-6">
+                  {# Buttons moved inside the card, at the top #}
+                  <div class="flex justify-between items-center mb-4">
+                      <button onclick="history.back()" class="btn-secondary border-sm border-[#16213e] text-[#16213e]">
+                          <i class="fas fa-arrow-left mr-2"></i>Back
+                      </button>
+                      <button onclick="clearWishlistConfirmation()" class="btn-destructive">
+                          <i class="fas fa-trash-alt mr-2"></i>Clear Wishlist
+                      </button>
+                  </div>
+                  <div class="grid grid-cols-1 gap-3">
+                      {% for item in wishlist_items %}
+                          <div class="wishlist-card shadow-lg shadow-gray-400" style="background:rgba(243, 245, 255, 1);">
+                              <div class="flex-shrink-0">
+                                  {% if item.display_image %}
+                                      <img src="{{ item.display_image.url }}" alt="{{ item.product.product_name }}" class="product-image">
+                                  {% else %}
+                                      <div class="product-image bg-gray-200 flex items-center justify-center rounded-lg">
+                                          <i class="fas fa-image text-2xl text-gray-400"></i>
+                                      </div>
+                                  {% endif %}
+                              </div>
+                              <div class="product-details">
+                                  <h3 class="text-base font-bold text-gray-900">{{ item.product.product_name }}</h3>
+                                  <p class="text-sm text-gray-600">Variant: {{ item.variant.get_color_display }}</p>
+                                  <p class="price text-base font-semibold text-[#16213e]">₹{{ item.discounted_price|floatformat:0 }}</p>
+                              </div>
+                              <div class="wishlist-actions">
+                                  <button onclick="addToCartFromWishlist('{{ item.product.id }}', '{{ item.variant.id }}', '{{ item.id }}')"
+                                      class="btn-primary">
+                                      <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                                  </button>
+                                  {# New container for View and Remove buttons to stack them #}
+                                  <div class="flex flex-col gap-2 w-full">
+                                      <a href="{% url 'products_details' item.product.id %}" class="btn-secondary">
+                                          <i class="fas fa-eye mr-2"></i>View Product
+                                      </a>
+                                      <button onclick="removeFromWishlistConfirmation('{{ item.id }}', '{{ item.product.product_name }}')"
+                                          class="btn-secondary">
+                                          <i class="fas fa-trash mr-2"></i>Remove
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+                      {% endfor %}
+                  </div>
+              </div>
+          {% else %}
+              <div class="empty-wishlist-card bg-gray-200 shadow-lg shadow-gray-400 text-center py-20">
+                  <i class="fas fa-heart text-6xl text-gray-400 mb-4"></i>
+                  <h4 class="text-2xl font-semibold text-gray-900 mb-2">Your Wishlist is Empty</h4>
+                  <p class="text-gray-600 mb-6 max-w-md mx-auto">Add products you love to your wishlist to save them for later and easily move them to your cart.</p>
+                  <a href="{% url 'products_list' %}" class="btn-primary px-8 py-3 text-white font-semibold rounded-full">
+                      <i class="fas fa-shopping-bag mr-2"></i>Start Shopping
+                  </a>
+              </div>
+          {% endif %}
+      </div>
+  </div>
+  <hr style="background: #ffffff;">
+  {% include 'footer.html' %} {# Assuming footer.html contains your footer content #}
+
+  <!-- Confirmation Modal Structure -->
+  <div id="confirmationModal" class="confirmation-modal-overlay">
+      <div class="confirmation-modal-content">
+          <h4 id="confirmationModalTitle">Confirm Action</h4>
+          <p id="confirmationModalMessage">Are you sure you want to proceed?</p>
+          <div class="confirmation-modal-buttons">
+              <button id="confirmNoBtn" class="btn-secondary">No</button>
+              <button id="confirmYesBtn" class="btn-destructive">Yes</button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      const csrftoken = getCookie('csrftoken');
+
+      // #Ajax - Utility functions (copied from product_details.html)
+      function showLoading() {
+          document.getElementById('loadingOverlay').style.display = 'flex';
+      }
+
+      function hideLoading() {
+          document.getElementById('loadingOverlay').style.display = 'none';
+      }
+
+      function showToast(message, type = 'success') {
+          const toast = document.createElement('div');
+          toast.className = `toast ${type}`;
+          toast.textContent = message;
+          document.body.appendChild(toast);
+          setTimeout(() => {
+              toast.remove();
+          }, 3000);
+      }
+
+      // --- Custom Confirmation Modal Logic ---
+      const confirmationModal = document.getElementById('confirmationModal');
+      const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+      const confirmationModalMessage = document.getElementById('confirmationModalMessage');
+      const confirmYesBtn = document.getElementById('confirmYesBtn');
+      const confirmNoBtn = document.getElementById('confirmNoBtn');
+
+      let currentConfirmAction = null; // Stores the function to call on 'Yes'
+
+      function showConfirmationModal(title, message, onConfirmCallback) {
+          confirmationModalTitle.textContent = title;
+          confirmationModalMessage.textContent = message;
+          currentConfirmAction = onConfirmCallback;
+          confirmationModal.classList.add('active');
+      }
+
+      function hideConfirmationModal() {
+          confirmationModal.classList.remove('active');
+          currentConfirmAction = null;
+      }
+
+      confirmYesBtn.addEventListener('click', () => {
+          if (currentConfirmAction) {
+              currentConfirmAction();
+          }
+          hideConfirmationModal();
+      });
+
+      confirmNoBtn.addEventListener('click', () => {
+          hideConfirmationModal();
+      });
+
+      // --- Existing Wishlist Functions (Modified to use Toast and Loading) ---
+
+      async function addToCartFromWishlist(productId, variantId, wishlistItemId) {
+          showLoading();
+          const response = await fetch('{% url "add_to_cart" %}', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify({
+                  product_id: productId,
+                  variant_id: variantId,
+                  quantity: 1 // Default quantity when adding from wishlist
+              })
+          });
+          const data = await response.json();
+          hideLoading();
+          if (data.success) {
+              // If successfully added to cart, remove from wishlist without showing another confirmation
+              await removeFromWishlist(wishlistItemId, false); // Pass false to prevent confirmation
+              showToast(data.message, 'success');
+              location.reload(); // Reload page to update cart count and wishlist display
+          } else {
+              showToast('Error: ' + data.message, 'error');
+          }
+      }
+
+      // Function to trigger confirmation for removing a single item
+      function removeFromWishlistConfirmation(wishlistItemId, productName) {
+          showConfirmationModal(
+              'Remove Item',
+              `Are you sure you want to remove "${productName}" from your wishlist?`,
+              () => removeFromWishlist(wishlistItemId, true) // Pass true to indicate it's a direct removal
+          );
+      }
+
+      // Actual function to remove from wishlist (called after confirmation)
+      async function removeFromWishlist(wishlistItemId, showAlert = true) {
+          showLoading();
+          const response = await fetch('{% url "remove_from_wishlist" %}', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+              },
+              body: JSON.stringify({
+                  wishlist_item_id: wishlistItemId
+              })
+          });
+          const data = await response.json();
+          hideLoading();
+          if (data.success) {
+              if (showAlert) { // Only show toast if it's a direct removal, not from add to cart
+                  showToast(data.message, 'success');
+              }
+              location.reload(); // Reload page to update wishlist display
+          } else {
+              showToast('Error: ' + data.message, 'error');
+          }
+      }
+
+      // Function to trigger confirmation for clearing the entire wishlist
+      function clearWishlistConfirmation() {
+          showConfirmationModal(
+              'Clear Wishlist',
+              "Are you sure you want to clear your entire wishlist? This action cannot be undone.",
+              () => clearWishlist()
+          );
+      }
+
+      // Actual function to clear wishlist (called after confirmation)
+      async function clearWishlist() {
+          showLoading();
+          const response = await fetch('{% url "clear_wishlist" %}', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': csrftoken,
+              }
+          });
+          const data = await response.json();
+          hideLoading();
+          if (data.success) {
+              showToast(data.message, 'success');
+              location.reload();
+          } else {
+              showToast('Error: ' + data.message, 'error');
+          }
+      }
+</script>
+</body>
+</html>

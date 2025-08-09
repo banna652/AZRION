@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .failure-container {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.2);
+            border: 1px solid #fca5a5;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .failure-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            animation: failurePulse 2s ease-in-out infinite;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+        }
+
+        @keyframes failurePulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 15px 40px rgba(239, 68, 68, 0.4);
+            }
+        }
+
+        .failure-cross {
+            font-size: 3rem;
+            color: white;
+            animation: crossAppear 0.8s ease-out;
+        }
+
+        @keyframes crossAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) rotate(-180deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2) rotate(-90deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .order-details-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            margin: 0.5rem;
+            min-width: 200px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #16213e;
+            border: 2px solid #16213e;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            margin: 0.5rem;
+            min-width: 200px;
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #16213e;
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-secondary:hover::before {
+            left: 0;
+        }
+
+        .btn-secondary:hover {
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(22, 33, 62, 0.2);
+        }
+
+        .order-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .order-info-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .order-info-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-info-value {
+            font-size: 1.125rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #ef4444;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .failure-container {
+                padding: 2rem 1rem;
+                margin: 1rem;
+            }
+            
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+            
+            .order-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#16213e] min-h-screen">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>Processing payment...</span>
+        </div>
+    </div>
+
+    <div class="pt-20 min-h-screen flex items-center justify-center px-4">
+        <div class="failure-container">
+            <!-- Failure Icon -->
+            <div class="failure-icon">
+                <i class="fas fa-times failure-cross"></i>
+            </div>
+
+            <!-- Failure Message -->
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Payment Failed!</h1>
+            <p class="text-lg text-gray-600 mb-6">
+                We're sorry, but your payment could not be processed. Don't worry, your order is still saved and you can try again.
+            </p>
+
+            <!-- Order Details Card -->
+            <div class="order-details-card">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Details</h2>
+                
+                <div class="order-info-grid">
+                    <div class="order-info-item">
+                        <div class="order-info-label">Order Number</div>
+                        <div class="order-info-value">#{{ order.order_number }}</div>
+                    </div>
+                    
+                    <div class="order-info-item">
+                        <div class="order-info-label">Total Amount</div>
+                        <div class="order-info-value">₹{{ order.total_amount }}</div>
+                    </div>
+                    
+                    <div class="order-info-item">
+                        <div class="order-info-label">Payment Method</div>
+                        <div class="order-info-value">{{ order.get_payment_method_display }}</div>
+                    </div>
+                    
+                    <div class="order-info-item">
+                        <div class="order-info-label">Order Status</div>
+                        <div class="order-info-value">Pending Payment</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        <p class="text-red-700 text-sm">
+                            <strong>Payment Issue:</strong> Your payment was not successful. This could be due to insufficient funds, 
+                            network issues, or bank restrictions. Please try again or use a different payment method.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8">
+                <button id="retry-payment-btn" class="btn-primary">
+                    <i class="fas fa-redo mr-2"></i>
+                    Retry Payment
+                </button>
+                
+                <a href="{% url 'order_detail' order.id %}" class="btn-secondary">
+                    <i class="fas fa-receipt mr-2"></i>
+                    View Order Details
+                </a>
+            </div>
+
+            <!-- Additional Help -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-600 mb-4">
+                    <strong>Common Solutions:</strong>
+                </p>
+                <div class="text-left max-w-md mx-auto">
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            Check your internet connection
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            Ensure sufficient balance in your account
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            Try using a different payment method
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            Contact your bank if the issue persists
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Contact Support -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-600 mb-2">
+                    Still having trouble? Contact our support team
+                </p>
+                <div class="flex justify-center items-center space-x-4 text-sm text-gray-500">
+                    <span><i class="fas fa-phone mr-1"></i> +91 9876543210</span>
+                    <span><i class="fas fa-envelope mr-1"></i> support@azrion.com</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function showLoading() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            function hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Retry payment functionality
+            const retryBtn = document.getElementById('retry-payment-btn');
+            retryBtn?.addEventListener('click', function() {
+                const btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Preparing Payment...';
+                
+                showLoading();
+
+                fetch(`/retry-payment/{{ order.id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    
+                    if (data.success) {
+                        const options = {
+                            key: '{{ razorpay_key_id }}',
+                            amount: data.amount,
+                            currency: data.currency,
+                            name: data.name,
+                            description: data.description,
+                            order_id: data.razorpay_order_id,
+                            prefill: data.prefill,
+                            theme: {
+                                color: '#16213e'
+                            },
+                            handler: function(response) {
+                                verifyPayment(response, data.order_id);
+                            },
+                            modal: {
+                                ondismiss: function() {
+                                    btn.disabled = false;
+                                    btn.innerHTML = '<i class="fas fa-redo mr-2"></i>Retry Payment';
+                                    showToast('Payment cancelled. You can try again anytime.', 'error');
+                                }
+                            }
+                        };
+
+                        const rzp = new Razorpay(options);
+                        rzp.open();
+                    } else {
+                        showToast(data.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-redo mr-2"></i>Retry Payment';
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showToast('An error occurred while preparing payment.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-redo mr-2"></i>Retry Payment';
+                });
+            });
+
+            function verifyPayment(paymentResponse, orderId) {
+                showLoading();
+
+                fetch('/verify-payment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_signature: paymentResponse.razorpay_signature,
+                        order_id: orderId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    
+                    if (data.success) {
+                        showToast(data.message);
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1000);
+                    } else {
+                        showToast(data.message, 'error');
+                        const retryBtn = document.getElementById('retry-payment-btn');
+                        retryBtn.disabled = false;
+                        retryBtn.innerHTML = '<i class="fas fa-redo mr-2"></i>Retry Payment';
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showToast('Payment verification failed.', 'error');
+                    const retryBtn = document.getElementById('retry-payment-btn');
+                    retryBtn.disabled = false;
+                    retryBtn.innerHTML = '<i class="fas fa-redo mr-2"></i>Retry Payment';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

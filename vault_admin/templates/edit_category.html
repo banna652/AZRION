@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Category | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #16213e;
+            border: none;
+            border-radius: 12px;
+        }
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, rgb(51, 59, 82), rgb(39, 52, 87));
+            transform: translateY(-5px);
+        }
+        .sticky-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+        }
+        .sticky-sidebar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            height: calc(100vh - 64px);
+            z-index: 30;
+        }
+        .main-content-with-nav {
+            margin-top: 64px;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .image-update-indicator {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .sticky-sidebar {
+                top: 64px;
+                height: calc(100vh - 64px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-navy shadow-lg sticky-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <button id="sidebarToggle" class="md:hidden text-white hover:text-gray-300 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex-shrink-0 flex items-center ml-4 md:ml-0">
+                        <h1 class="text-white text-xl font-bold tracking-widest uppercase">AZRION Admin</h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="text-white text-sm">
+                        Welcome, {{ user.username }}
+                    </div>
+                    <a href="{% url 'logout' %}">
+                        <button class="btn-primaryy px-4 py-2 text-sm text-white">
+                            Logout
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex main-content-with-nav">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-navy-dark w-64 sticky-sidebar sidebar-transition transform -translate-x-full md:translate-x-0 fixed md:fixed">
+            <div class="p-4 h-full overflow-y-auto">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'dashboard' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'user_management' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="users">
+                            <i class="fas fa-users mr-3"></i>
+                            Users
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'category_list' %}" class="nav-link flex items-center p-3 text-white bg-navy rounded-lg transition-colors" data-page="categories">
+                            <i class="fas fa-tags mr-3"></i>
+                            Categories
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'product_list' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="products">
+                            <i class="fas fa-box mr-3"></i>
+                            Products
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'order_management_page' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="orders">
+                            <i class="fas fa-shopping-cart mr-3"></i>
+                            Orders
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'coupon_list' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="coupons">
+                            <i class="fas fa-ticket-alt mr-3"></i>
+                            Coupons
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'settings' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="settings">
+                            <i class="fas fa-cog mr-3"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Overlay for mobile -->
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"></div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-4 md:p-8 md:ml-64">
+            <!-- Messages Display -->
+            {% if messages %}
+                <div class="mb-6">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    {% if message.tags == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif message.tags == 'error' %}
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium">{{ message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Header Section -->
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-3xl font-bold text-navy mb-2">Edit Category</h2>
+                        <p class="text-gray-600">Update category information</p>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <a href="{% url 'category_list' %}">
+                            <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Categories
+                            </button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Category Form -->
+            <div class="bg-white rounded-lg shadow-md p-8">
+                <form method="post" enctype="multipart/form-data" class="space-y-6" id="editCategoryForm">
+                    {% csrf_token %}
+                    
+                    <!-- Category Name -->
+                    <div>
+                        <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-tag mr-2"></i>Category Name *
+                        </label>
+                        <input type="text" id="name" name="name" value="{{ category.name }}" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                            placeholder="Enter category name">
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-align-left mr-2"></i>Description
+                        </label>
+                        <textarea id="description" name="description" rows="4"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                            placeholder="Enter category description">{{ category.description }}</textarea>
+                    </div>
+
+                    <!-- Current Image -->
+                    {% if category.image %}
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-image mr-2"></i>Current Image
+                        </label>
+                        <div class="mb-4">
+                            <img src="{{ category.image.url }}" alt="{{ category.name }}" class="image-preview border rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-500 mt-2">Current category image</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Image Upload -->
+                    <div>
+                        <label for="image" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-image mr-2"></i>{% if category.image %}Update Image (Optional){% else %}Category Image{% endif %}
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors" id="imageUploadArea">
+                            <input type="file" id="image" name="image" accept="image/*" class="hidden" onchange="previewImage(this)">
+                            <div id="imagePreview" class="hidden mb-4">
+                                <img id="preview" class="image-preview mx-auto">
+                                <button type="button" onclick="removeNewImage()" class="mt-2 text-red-600 hover:text-red-800 text-sm">
+                                    <i class="fas fa-times mr-1"></i>Remove New Image
+                                </button>
+                            </div>
+                            <div id="uploadPlaceholder">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">{% if category.image %}Click to update image{% else %}Click to upload category image{% endif %}</p>
+                                <p class="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                {% if category.image %}
+                                    <p class="text-xs text-blue-500 mt-2">Leave empty to keep current image</p>
+                                {% endif %}
+                            </div>
+                            <button type="button" onclick="document.getElementById('image').click()" 
+                                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all">
+                                Choose File
+                            </button>
+                        </div>
+                        <div id="imageUpdateIndicator" class="image-update-indicator">
+                            <i class="fas fa-check mr-2"></i>New image selected - will replace current image when saved
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                        <button type="submit" class="btn-primaryy px-8 py-3 text-white font-semibold flex-1 sm:flex-none">
+                            <i class="fas fa-save mr-2"></i>Update Category
+                        </button>
+                        <a href="{% url 'category_list' %}" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-all text-center flex-1 sm:flex-none">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar functionality
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if (sidebarToggle && sidebar && sidebarOverlay) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                sidebarOverlay.classList.toggle('hidden');
+            });
+
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+            });
+        }
+
+        // Set active navigation item
+        function setActiveNavItem(currentPage) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+
+            const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+        }
+
+        // Auto-detect current page and set active state
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveNavItem('categories');
+        });
+
+        // Image preview functionality
+        function previewImage(input) {
+            const preview = document.getElementById('preview');
+            const imagePreview = document.getElementById('imagePreview');
+            const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+            const updateIndicator = document.getElementById('imageUpdateIndicator');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                    uploadPlaceholder.classList.add('hidden');
+                    updateIndicator.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Remove new image function
+        function removeNewImage() {
+            const imageInput = document.getElementById('image');
+            const imagePreview = document.getElementById('imagePreview');
+            const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+            const updateIndicator = document.getElementById('imageUpdateIndicator');
+            
+            imageInput.value = '';
+            imagePreview.classList.add('hidden');
+            uploadPlaceholder.classList.remove('hidden');
+            updateIndicator.style.display = 'none';
+        }
+
+        // Auto-hide messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

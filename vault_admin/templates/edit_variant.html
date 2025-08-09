@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Variant - {{ variant.product.product_name }} | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+    <style>
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #16213e;
+            border: none;
+            border-radius: 12px;
+        }
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, rgb(51, 59, 82), rgb(39, 52, 87));
+            transform: translateY(-2px);
+        }
+        .image-preview {
+            position: relative;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+        .image-preview img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        .image-preview .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .image-preview .primary-btn {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #16213e;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .image-preview.primary {
+            border-color: #16213e;
+            border-width: 3px;
+        }
+        .existing-image {
+            position: relative;
+            display: inline-block;
+            margin: 0.5rem;
+        }
+        .existing-image img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        .existing-image .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .existing-image .primary-btn {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #16213e;
+            color: white;
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .existing-image.primary {
+            border-color: #16213e;
+            border-width: 3px;
+        }
+        .drag-drop-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        .drag-drop-area.dragover {
+            border-color: #16213e;
+            background: #f0f9ff;
+        }
+        .drag-drop-area:hover {
+            border-color: #16213e;
+            background: #f0f9ff;
+        }
+        .color-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            min-height: 80px;
+        }
+        .color-tile:hover {
+            border-color: #16213e;
+            box-shadow: 0 4px 12px rgba(22, 33, 62, 0.15);
+            transform: translateY(-2px);
+        }
+        .color-tile.selected {
+            border-color: #16213e;
+            border-width: 3px;
+            background: #f0f9ff;
+            box-shadow: 0 4px 12px rgba(22, 33, 62, 0.2);
+        }
+        .color-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 8px;
+        }
+        .custom-color-circle {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+            background-size: 300% 300%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .color-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            color: #374151;
+        }
+        .custom-color-section {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: #f9fafb;
+        }
+        .custom-color-section.active {
+            display: block;
+            border-color: #16213e;
+            background: #f0f9ff;
+        }
+        .color-input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .hex-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Messages Display -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Edit Color Variant</h2>
+                    <p class="text-gray-600">{{ variant.product.product_name }} - {{ variant.get_color_display }}</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="{% url 'product_variants' variant.product.id %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Variants
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Variant Form -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <form method="post" enctype="multipart/form-data" id="variantForm">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Product Info -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Product Information</h3>
+                            <div class="flex items-center gap-4">
+                                {% if variant.product.main_image %}
+                                    <img src="{{ variant.product.main_image.url }}" alt="{{ variant.product.product_name }}" 
+                                         class="w-16 h-16 object-cover rounded-lg border-2 border-gray-200">
+                                {% else %}
+                                    <div class="w-16 h-16 bg-gray-200 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">{{ variant.product.product_name }}</h4>
+                                    <p class="text-sm text-gray-600">{{ variant.product.category.name }}</p>
+                                    <p class="text-sm font-medium text-gray-900">₹{{ variant.product.price }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Color Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-4">
+                                <i class="fas fa-palette mr-2"></i>Select Color *
+                            </label>
+                            
+                            <!-- Predefined Colors -->
+                            <div class="mb-4">
+                                <h4 class="text-sm font-medium text-gray-600 mb-3">Predefined Colors</h4>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div class="color-tile {% if variant.color == 'orange' and not variant.color_code %}selected{% endif %}" data-color="orange">
+                                        <div class="color-circle" style="background-color: #f97316;"></div>
+                                        <span class="color-label">Orange</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'purple' and not variant.color_code %}selected{% endif %}" data-color="purple">
+                                        <div class="color-circle" style="background-color: #8b5cf6;"></div>
+                                        <span class="color-label">Purple</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'pink' and not variant.color_code %}selected{% endif %}" data-color="pink">
+                                        <div class="color-circle" style="background-color: #ec4899;"></div>
+                                        <span class="color-label">Pink</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'brown' and not variant.color_code %}selected{% endif %}" data-color="brown">
+                                        <div class="color-circle" style="background-color: #92400e;"></div>
+                                        <span class="color-label">Brown</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'gray' and not variant.color_code %}selected{% endif %}" data-color="gray">
+                                        <div class="color-circle" style="background-color: #6b7280;"></div>
+                                        <span class="color-label">Gray</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'navy' and not variant.color_code %}selected{% endif %}" data-color="navy">
+                                        <div class="color-circle" style="background-color: #1e40af;"></div>
+                                        <span class="color-label">Navy</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'gold' and not variant.color_code %}selected{% endif %}" data-color="gold">
+                                        <div class="color-circle" style="background-color: #d97706;"></div>
+                                        <span class="color-label">Gold</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'silver' and not variant.color_code %}selected{% endif %}" data-color="silver">
+                                        <div class="color-circle" style="background-color: #9ca3af;"></div>
+                                        <span class="color-label">Silver</span>
+                                    </div>
+                                    <div class="color-tile {% if variant.color == 'rose_gold' and not variant.color_code %}selected{% endif %}" data-color="rose_gold">
+                                        <div class="color-circle" style="background-color: #f472b6;"></div>
+                                        <span class="color-label">Rose Gold</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Color Option -->
+                            <div class="border-t border-gray-200 pt-4">
+                                <div class="color-tile {% if variant.color_code %}selected{% endif %}" id="customColorTile">
+                                    <div class="color-circle custom-color-circle" id="customColorCircle"></div>
+                                    <span class="color-label">Custom Color</span>
+                                </div>
+                                
+                                <!-- Custom Color Input Section -->
+                                <div class="custom-color-section {% if variant.color_code %}active{% endif %}" id="customColorSection">
+                                    <div class="color-input-group">
+                                        <input type="color" id="colorPicker" class="color-picker" value="{% if variant.color_code %}{{ variant.color_code }}{% else %}#ff0000{% endif %}">
+                                        <input type="text" id="hexInput" name="color_code" class="hex-input" 
+                                               placeholder="#FF0000" value="{% if variant.color_code %}{{ variant.color_code }}{% endif %}"
+                                               pattern="^#[0-9A-Fa-f]{6}$">
+                                        <button type="button" id="clearCustomColor" class="px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                                            Clear
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-2">Enter a hex color code or use the color picker</p>
+                                </div>
+                            </div>
+
+                            <!-- Hidden inputs for form submission -->
+                            <input type="hidden" id="colorTypeInput" name="color_type" value="{% if variant.color_code %}custom{% else %}predefined{% endif %}">
+                            <input type="hidden" id="colorInput" name="color" value="{% if variant.color_code %}custom{% else %}{{ variant.color }}{% endif %}">
+                        </div>
+                        <!-- Add this after the color selection section and before the existing images section -->
+                        <div>
+                            <label for="stock_quantity" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-boxes mr-2"></i>Stock Quantity *
+                            </label>
+                            <input type="number" id="stock_quantity" name="stock_quantity" required min="0" max="9999"
+                                   value="{{ variant.stock_quantity }}"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                   placeholder="Enter stock quantity">
+                            <p class="text-sm text-gray-500 mt-1">Number of items available for this color variant</p>
+                            <div class="mt-2 p-2 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Current Status: 
+                                    <span class="font-medium {% if variant.stock_quantity == 0 %}text-red-600{% elif variant.stock_quantity <= 5 %}text-orange-600{% else %}text-green-600{% endif %}">
+                                        {{ variant.get_stock_status }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Existing Images -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-images mr-2"></i>Current Variant Images
+                            </label>
+                            <div id="existingImages" class="flex flex-wrap">
+                                {% for image in variant.images.all %}
+                                    <div class="existing-image {% if image.is_primary %}primary{% endif %}" data-image-id="{{ image.id }}">
+                                        <img src="{{ image.image.url }}" alt="Variant Image">
+                                        <div class="remove-btn" onclick="markForRemoval({{ image.id }})">
+                                            <i class="fas fa-times"></i>
+                                        </div>
+                                        <div class="primary-btn" onclick="setPrimaryExisting({{ image.id }})">
+                                            {% if image.is_primary %}Primary{% else %}Set Primary{% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Add New Images -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-plus mr-2"></i>Add New Images
+                            </label>
+                            <!-- Drag and Drop Area -->
+                            <div class="drag-drop-area" id="dragDropArea">
+                                <div class="text-center">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg font-medium text-gray-700 mb-2">Drag & Drop Images Here</p>
+                                    <p class="text-sm text-gray-500 mb-4">or click to browse</p>
+                                    <input type="file" id="images" name="images" multiple accept="image/*"
+                                           class="hidden">
+                                    <button type="button" onclick="document.getElementById('images').click()"
+                                            class="bg-navy hover:bg-navy-dark text-white font-semibold px-6 py-2 rounded-lg transition-all">
+                                        <i class="fas fa-plus mr-2"></i>Choose Images
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- New Image Preview Area -->
+                            <div id="imagePreview" class="mt-4 flex flex-wrap"></div>
+                        </div>
+
+                        <!-- Image Requirements -->
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-medium text-blue-800 mb-2">Image Requirements:</h4>
+                            <ul class="text-sm text-blue-700 space-y-1">
+                                <li><i class="fas fa-check mr-2"></i>Minimum 3 images total required</li>
+                                <li><i class="fas fa-check mr-2"></i>Maximum 10 images total allowed</li>
+                                <li><i class="fas fa-check mr-2"></i>Supported formats: JPG, PNG, GIF</li>
+                                <li><i class="fas fa-check mr-2"></i>Maximum file size: 10MB per image</li>
+                                <li><i class="fas fa-check mr-2"></i>Click "Set Primary" to change primary image</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for images to remove and primary image -->
+                <div id="removeImageInputs"></div>
+                <input type="hidden" id="primaryImageInput" name="primary_image" value="">
+
+                <!-- Form Actions -->
+                <div class="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
+                    <button type="submit" class="btn-primaryy px-8 py-3 text-white font-semibold flex-1 md:flex-none">
+                        <i class="fas fa-save mr-2"></i>Update Variant
+                    </button>
+                    <a href="{% url 'product_variants' variant.product.id %}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-8 py-3 rounded-lg transition-all text-center">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+
+    <script>
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="products"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 5000);
+            });
+
+            // Initialize color selection
+            initializeColorSelection();
+        });
+
+        // Color selection variables
+        const colorTiles = document.querySelectorAll('.color-tile');
+        const customColorTile = document.getElementById('customColorTile');
+        const customColorSection = document.getElementById('customColorSection');
+        const colorPicker = document.getElementById('colorPicker');
+        const hexInput = document.getElementById('hexInput');
+        const customColorCircle = document.getElementById('customColorCircle');
+        const clearCustomColorBtn = document.getElementById('clearCustomColor');
+        const colorTypeInput = document.getElementById('colorTypeInput');
+        const colorInput = document.getElementById('colorInput');
+
+        function initializeColorSelection() {
+            // Handle predefined color selection
+            colorTiles.forEach(tile => {
+                if (tile.id !== 'customColorTile') {
+                    tile.addEventListener('click', function() {
+                        const colorValue = this.dataset.color;
+                        if (this.classList.contains('selected')) {
+                            // Deselect if already selected
+                            this.classList.remove('selected');
+                            colorTypeInput.value = '';
+                            colorInput.value = '';
+                        } else {
+                            // Select this color
+                            selectPredefinedColor(colorValue);
+                        }
+                    });
+                }
+            });
+
+            // Handle custom color tile click
+            customColorTile.addEventListener('click', function() {
+                if (this.classList.contains('selected')) {
+                    // Deselect custom color
+                    clearCustomColor();
+                } else {
+                    // Select custom color
+                    selectCustomColor();
+                }
+            });
+
+            // Handle color picker change
+            colorPicker.addEventListener('input', function() {
+                const color = this.value;
+                hexInput.value = color.toUpperCase();
+                updateCustomColorCircle(color);
+                updateFormInputs('custom', 'custom');
+            });
+
+            // Handle hex input change
+            hexInput.addEventListener('input', function() {
+                const hex = this.value;
+                if (isValidHex(hex)) {
+                    colorPicker.value = hex;
+                    updateCustomColorCircle(hex);
+                    updateFormInputs('custom', 'custom');
+                }
+            });
+
+            // Handle clear custom color
+            clearCustomColorBtn.addEventListener('click', clearCustomColor);
+
+            // Initialize custom color circle if there's a value
+            if (hexInput.value) {
+                updateCustomColorCircle(hexInput.value);
+            }
+        }
+
+        function selectPredefinedColor(colorValue) {
+            // Clear all selections
+            colorTiles.forEach(tile => tile.classList.remove('selected'));
+            customColorSection.classList.remove('active');
+            
+            // Select the clicked color
+            const selectedTile = document.querySelector(`[data-color="${colorValue}"]`);
+            if (selectedTile) {
+                selectedTile.classList.add('selected');
+            }
+            
+            // Update form inputs
+            updateFormInputs('predefined', colorValue);
+        }
+
+        function selectCustomColor() {
+            // Clear predefined selections
+            colorTiles.forEach(tile => {
+                if (tile.id !== 'customColorTile') {
+                    tile.classList.remove('selected');
+                }
+            });
+            
+            // Select custom color
+            customColorTile.classList.add('selected');
+            customColorSection.classList.add('active');
+            
+            // Set default color if empty
+            if (!hexInput.value) {
+                const defaultColor = '#ff0000';
+                hexInput.value = defaultColor;
+                colorPicker.value = defaultColor;
+                updateCustomColorCircle(defaultColor);
+            }
+            
+            // Update form inputs
+            updateFormInputs('custom', 'custom');
+        }
+
+        function clearCustomColor() {
+            customColorTile.classList.remove('selected');
+            customColorSection.classList.remove('active');
+            hexInput.value = '';
+            colorPicker.value = '#ff0000';
+            customColorCircle.style.background = 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3)';
+            updateFormInputs('', '');
+        }
+
+        function updateCustomColorCircle(color) {
+            if (color && isValidHex(color)) {
+                customColorCircle.style.background = color;
+                customColorCircle.style.animation = 'none';
+            } else {
+                customColorCircle.style.background = 'linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3)';
+                customColorCircle.style.animation = 'gradientShift 3s ease infinite';
+            }
+        }
+
+        function updateFormInputs(type, color) {
+            colorTypeInput.value = type;
+            colorInput.value = color;
+        }
+
+        function isValidHex(hex) {
+            return /^#[0-9A-Fa-f]{6}$/.test(hex);
+        }
+
+        // Image handling (same as before)
+        const imageInput = document.getElementById('images');
+        const imagePreview = document.getElementById('imagePreview');
+        const dragDropArea = document.getElementById('dragDropArea');
+        const removeImageInputs = document.getElementById('removeImageInputs');
+        const primaryImageInput = document.getElementById('primaryImageInput');
+        let selectedFiles = [];
+        let imagesToRemove = [];
+        let primaryImageId = {% if variant.images.all %}{{ variant.images.all.0.id }}{% else %}null{% endif %};
+
+        // Set initial primary image
+        {% for image in variant.images.all %}
+            {% if image.is_primary %}
+                primaryImageId = {{ image.id }};
+            {% endif %}
+        {% endfor %}
+
+        // Handle file input change
+        imageInput.addEventListener('change', function(e) {
+            handleFiles(e.target.files);
+        });
+
+        // Drag and drop functionality
+        dragDropArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    selectedFiles.push(file);
+                }
+            }
+            updateImagePreview();
+            updateFileInput();
+        }
+
+        function updateImagePreview() {
+            imagePreview.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'image-preview';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="remove-btn" onclick="removeNewImage(${index})">
+                            <i class="fas fa-times"></i>
+                        </div>
+                        <div class="primary-btn" onclick="setPrimaryNew(${index})">
+                            Set Primary
+                        </div>
+                    `;
+                    imagePreview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeNewImage(index) {
+            selectedFiles.splice(index, 1);
+            updateImagePreview();
+            updateFileInput();
+        }
+
+        function updateFileInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            imageInput.files = dt.files;
+        }
+
+        function markForRemoval(imageId) {
+            // Add to removal list
+            if (!imagesToRemove.includes(imageId)) {
+                imagesToRemove.push(imageId);
+                // Create hidden input
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'remove_images';
+                input.value = imageId;
+                removeImageInputs.appendChild(input);
+            }
+
+            // Hide the image visually
+            const imageDiv = document.querySelector(`[data-image-id="${imageId}"]`);
+            if (imageDiv) {
+                imageDiv.style.opacity = '0.5';
+                imageDiv.style.pointerEvents = 'none';
+                const removeBtn = imageDiv.querySelector('.remove-btn');
+                if (removeBtn) {
+                    removeBtn.innerHTML = '<i class="fas fa-undo"></i>';
+                    removeBtn.onclick = function() { undoRemoval(imageId); };
+                }
+            }
+        }
+
+        function undoRemoval(imageId) {
+            // Remove from removal list
+            const index = imagesToRemove.indexOf(imageId);
+            if (index > -1) {
+                imagesToRemove.splice(index, 1);
+                // Remove hidden input
+                const input = document.querySelector(`input[name="remove_images"][value="${imageId}"]`);
+                if (input) {
+                    input.remove();
+                }
+            }
+
+            // Restore image visually
+            const imageDiv = document.querySelector(`[data-image-id="${imageId}"]`);
+            if (imageDiv) {
+                imageDiv.style.opacity = '1';
+                imageDiv.style.pointerEvents = 'auto';
+                const removeBtn = imageDiv.querySelector('.remove-btn');
+                if (removeBtn) {
+                    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    removeBtn.onclick = function() { markForRemoval(imageId); };
+                }
+            }
+        }
+
+        function setPrimaryExisting(imageId) {
+            primaryImageId = imageId;
+            primaryImageInput.value = imageId;
+            
+            // Update visual indicators
+            document.querySelectorAll('.existing-image').forEach(img => {
+                img.classList.remove('primary');
+                const btn = img.querySelector('.primary-btn');
+                if (btn) btn.textContent = 'Set Primary';
+            });
+            
+            const selectedImage = document.querySelector(`[data-image-id="${imageId}"]`);
+            if (selectedImage) {
+                selectedImage.classList.add('primary');
+                const btn = selectedImage.querySelector('.primary-btn');
+                if (btn) btn.textContent = 'Primary';
+            }
+        }
+
+        function setPrimaryNew(index) {
+            // For new images, we can't set them as primary until they're uploaded
+            alert('New images will be processed after saving. You can set primary image after upload.');
+        }
+
+        // Form validation
+        document.getElementById('variantForm').addEventListener('submit', function(e) {
+            const colorType = colorTypeInput.value;
+            const color = colorInput.value;
+            
+            if (!colorType || !color) {
+                e.preventDefault();
+                alert('Please select a color for the variant.');
+                return false;
+            }
+
+            if (colorType === 'custom' && !isValidHex(hexInput.value)) {
+                e.preventDefault();
+                alert('Please enter a valid hex color code (e.g., #FF0000).');
+                return false;
+            }
+
+            const existingImages = document.querySelectorAll('.existing-image').length;
+            const removedImages = imagesToRemove.length;
+            const remainingExisting = existingImages - removedImages;
+            const newImages = selectedFiles.length;
+            const totalImages = remainingExisting + newImages;
+
+            if (totalImages < 3) {
+                e.preventDefault();
+                alert('Variant must have at least 3 images. Please add more images or remove fewer existing images.');
+                return false;
+            }
+
+            if (totalImages > 10) {
+                e.preventDefault();
+                alert('Maximum 10 images are allowed per variant.');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

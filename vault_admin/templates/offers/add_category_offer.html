@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Category Offer | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Messages Display -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Add Category Offer</h2>
+                    <p class="text-gray-600">Create a new discount offer for a specific category</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="{% url 'category_offer_list' %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Category Offers
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Category Offer Form -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <form method="post" class="space-y-6" id="categoryOfferForm">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Offer Name -->
+                        <div>
+                            <label for="offer_name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-tag mr-2"></i>Offer Name *
+                            </label>
+                            <input type="text" id="offer_name" name="offer_name" value="{{ offer_name }}" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                   placeholder="Enter offer name (e.g., Summer Sale, Black Friday)">
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label for="category" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-tags mr-2"></i>Category *
+                            </label>
+                            <select id="category" name="category" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                                <option value="">Select a category</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category_id == category.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Discount Percentage -->
+                        <div>
+                            <label for="discount_percentage" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-percent mr-2"></i>Discount Percentage *
+                            </label>
+                            <div class="relative">
+                                <input type="number" id="discount_percentage" name="discount_percentage" 
+                                       value="{{ discount_percentage }}" required min="0.01" max="100" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent pr-12"
+                                       placeholder="0.00">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">%</span>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">Enter percentage between 0.01 and 100</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Valid From -->
+                        <div>
+                            <label for="valid_from" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt mr-2"></i>Valid From *
+                            </label>
+                            <input type="datetime-local" id="valid_from" name="valid_from" value="{{ valid_from }}" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                        </div>
+
+                        <!-- Valid Until -->
+                        <div>
+                            <label for="valid_until" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-calendar-times mr-2"></i>Valid Until *
+                            </label>
+                            <input type="datetime-local" id="valid_until" name="valid_until" value="{{ valid_until }}" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left mr-2"></i>Description
+                            </label>
+                            <textarea id="description" name="description" rows="4"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                      placeholder="Enter offer description (optional)">{{ description }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offer Preview -->
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 class="font-medium text-blue-800 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>Offer Details:
+                    </h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li><i class="fas fa-check mr-2"></i>This offer will apply to all products in the selected category</li>
+                        <li><i class="fas fa-check mr-2"></i>If a product has both category and product offers, the higher discount will be applied</li>
+                        <li><i class="fas fa-check mr-2"></i>The offer will be automatically activated once created</li>
+                        <li><i class="fas fa-check mr-2"></i>You can deactivate the offer anytime from the offers list</li>
+                    </ul>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                    <button type="submit" class="btn-primaryy px-8 py-3 text-white font-semibold flex-1 sm:flex-none">
+                        <i class="fas fa-plus mr-2"></i>Create Category Offer
+                    </button>
+                    <a href="{% url 'category_offer_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-all text-center flex-1 sm:flex-none">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+    
+    <script>
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="offers"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 5000);
+            });
+
+            // Set minimum date to current date/time
+            const now = new Date();
+            const currentDateTime = now.toISOString().slice(0, 16);
+            document.getElementById('valid_from').min = currentDateTime;
+            document.getElementById('valid_until').min = currentDateTime;
+
+            // Update valid_until minimum when valid_from changes
+            document.getElementById('valid_from').addEventListener('change', function() {
+                document.getElementById('valid_until').min = this.value;
+            });
+        });
+
+        // Form validation
+        document.getElementById('categoryOfferForm').addEventListener('submit', function(e) {
+            const validFrom = new Date(document.getElementById('valid_from').value);
+            const validUntil = new Date(document.getElementById('valid_until').value);
+            const now = new Date();
+
+            if (validFrom >= validUntil) {
+                e.preventDefault();
+                alert('Valid from date must be before valid until date.');
+                return false;
+            }
+
+            if (validUntil <= now) {
+                e.preventDefault();
+                alert('Valid until date must be in the future.');
+                return false;
+            }
+
+            const discount = parseFloat(document.getElementById('discount_percentage').value);
+            if (discount <= 0 || discount > 100) {
+                e.preventDefault();
+                alert('Discount percentage must be between 0.01 and 100.');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

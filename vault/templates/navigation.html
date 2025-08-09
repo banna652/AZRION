@@ -1,0 +1,67 @@
+<nav class="fixed top-0 w-full z-50 glass-effect">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <h1 class="text-3xl font-bold uppercase tracking-widest text-gray-300"
+                    style="font-family: 'Playfair Display', serif;">
+                    AZRION
+                </h1>
+            </div>
+            <!-- Desktop Menu -->
+            <div class="hidden md:block">
+                <div class="ml-10 flex items-baseline space-x-8">
+                    <a href="{% url 'home' %}" class="nav-link text-gray-300 hover:text-white">Home</a>
+                    <a href="{% url 'products_list' %}" class="nav-link text-gray-300 hover:text-white">Collections</a>
+                    <a href="#about" class="nav-link text-gray-300 hover:text-white">About</a>
+                    <a href="#footer" class="nav-link text-gray-300 hover:text-white">Contact</a>
+
+                    {% if user.is_authenticated %}
+                    {% if request.resolver_match.url_name != 'wishlist_view' %}
+                    <a href="{% url 'wishlist_view' %}" class="relative text-gray-300 hover:text-white">
+                        <i class="fas fa-heart text-xl"></i>
+                        <span
+                            class="wishlist-count absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {% if user.wishlist.items.count %}{{ user.wishlist.items.count }}{% else %}0{% endif %}
+                        </span>
+                    </a>
+                    {% endif %}
+                    {% if request.resolver_match.url_name != 'cart_view' %}
+                    <a href="{% url 'cart_view' %}" class="relative text-gray-300 hover:text-white">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span
+                            class="cart-count absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {% if user.cart.get_total_items %}{{ user.cart.get_total_items }}{% else %}0{% endif %}
+                        </span>
+                    </a>
+                    {% endif %}
+                    <div class="relative group">
+                        <button class="btn-primaryy px-4 py-2 text-sm text-white flex items-center focus:outline-none">
+                            <i class="fas fa-user-circle mr-2 text-lg"></i>
+                            <i
+                                class="fas fa-chevron-down ml-2 text-xs group-hover:rotate-180 transition-transform duration-300"></i>
+                        </button>
+                        <div
+                            class="absolute right-0 mt-2 w-48 bg-[#16213e] rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 origin-top-right">
+                            <a href="{% url 'user_profile' %}"
+                                class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+                                My Profile
+                            </a>
+                            <a href="{% url 'logout' %}"
+                                class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn-primaryy px-4 py-2 text-sm text-white">
+                        Login
+                    </a>
+                    <a href="{% url 'sign_up' %}" class="btn-primaryy px-4 py-2 text-sm text-white">
+                        Sign Up
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>

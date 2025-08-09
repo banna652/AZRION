@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Report | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                        'primary': '#3b82f6',
+                        'success': '#10b981',
+                        'warning': '#f59e0b',
+                        'danger': '#ef4444',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% include 'nav_style.html' %}
+    <style>
+        .stats-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .stats-card .icon-wrapper {
+            background: linear-gradient(135deg, var(--icon-color-1), var(--icon-color-2));
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #16213e 0%, #1e293b 100%);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(22, 33, 62, 0.3);
+        }
+        
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(22, 33, 62, 0.4);
+        }
+        
+        .btn-primaryy:active {
+            transform: translateY(0);
+        }
+        
+        .main-content-with-nav {
+            margin-top: 64px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .table-row:hover {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.05) 100%);
+            transform: translateX(4px);
+            transition: all 0.2s ease;
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .section-header {
+            position: relative;
+            padding-bottom: 12px;
+        }
+        
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+            
+            .stats-card:hover {
+                transform: translateY(-4px) scale(1.01);
+            }
+        }
+        
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+    {% include 'nav.html' %}
+    
+    <div class="flex-1 p-4 md:p-8 md:ml-64 animate-fade-in">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div class="animate-slide-up">
+                    <h2 class="text-4xl font-bold bg-gradient-to-r from-navy to-blue-600 bg-clip-text text-transparent mb-3">
+                        Sales Report
+                    </h2>
+                    <p class="text-gray-600 text-lg">Comprehensive sales analytics and insights</p>
+                </div>
+                <div class="mt-6 md:mt-0 flex flex-wrap gap-3">
+                    <a href="{% url 'download_sales_report' %}?format=pdf&report_type={{ report_type }}&start_date={{ start_date_input }}&end_date={{ end_date_input }}">
+                        <button class="btn-primaryy px-6 py-3 text-white font-semibold text-sm rounded-xl flex items-center gap-2 hover:gap-3 transition-all">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>Export PDF</span>
+                        </button>
+                    </a>
+                    <a href="{% url 'download_sales_report' %}?format=excel&report_type={{ report_type }}&start_date={{ start_date_input }}&end_date={{ end_date_input }}">
+                        <button class="btn-primaryy px-6 py-3 text-white font-semibold text-sm rounded-xl flex items-center gap-2 hover:gap-3 transition-all">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Export Excel</span>
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="glass-card rounded-2xl shadow-xl p-8 mb-10 animate-slide-up">
+            <h3 class="section-header text-xl font-semibold text-gray-800 mb-6">
+                <i class="fas fa-filter mr-2 text-blue-500"></i>
+                Report Filters
+            </h3>
+            <form method="get" action="{% url 'sales_report' %}" class="flex flex-wrap items-end gap-6">
+                <div class="min-w-0 flex-1 min-w-[200px]">
+                    <label for="report_type" class="block text-sm font-semibold text-gray-700 mb-3">Report Type</label>
+                    <select id="report_type" name="report_type" onchange="toggleCustomDates()"
+                            class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm">
+                        <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Today</option>
+                        <option value="weekly" {% if report_type == 'weekly' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Last 30 Days</option>
+                        <option value="yearly" {% if report_type == 'yearly' %}selected{% endif %}>Last 365 Days</option>
+                        <option value="custom" {% if report_type == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+                
+                <div id="custom_dates" class="flex flex-wrap gap-4" style="display: {% if report_type == 'custom' %}flex{% else %}none{% endif %};">
+                    <div class="min-w-0 flex-1 min-w-[150px]">
+                        <label for="start_date" class="block text-sm font-semibold text-gray-700 mb-3">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date_input }}"
+                               class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm">
+                    </div>
+                    <div class="min-w-0 flex-1 min-w-[150px]">
+                        <label for="end_date" class="block text-sm font-semibold text-gray-700 mb-3">End Date</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date_input }}"
+                               class="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primaryy px-8 py-3 text-white font-semibold rounded-xl flex items-center gap-2 hover:gap-3 transition-all">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Generate Report</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="stats-card rounded-2xl shadow-lg p-6 text-center transition-all animate-bounce-in" style="--icon-color-1: #3b82f6; --icon-color-2: #1d4ed8;">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="icon-wrapper p-4 rounded-2xl">
+                        <i class="fas fa-shopping-cart text-2xl text-white"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2 font-medium uppercase tracking-wide">Total Orders</h3>
+                <p class="text-3xl font-bold text-gray-900 mb-1">{{ total_orders }}</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" style="width: 85%"></div>
+                </div>
+            </div>
+            
+            <div class="stats-card rounded-2xl shadow-lg p-6 text-center transition-all animate-bounce-in" style="--icon-color-1: #10b981; --icon-color-2: #059669; animation-delay: 0.1s;">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="icon-wrapper p-4 rounded-2xl">
+                        <i class="fas fa-rupee-sign text-2xl text-white"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2 font-medium uppercase tracking-wide">Total Revenue</h3>
+                <p class="text-3xl font-bold text-green-600 mb-1">₹{{ total_revenue|floatformat:2 }}</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full" style="width: 92%"></div>
+                </div>
+            </div>
+            
+            <div class="stats-card rounded-2xl shadow-lg p-6 text-center transition-all animate-bounce-in" style="--icon-color-1: #ef4444; --icon-color-2: #dc2626; animation-delay: 0.2s;">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="icon-wrapper p-4 rounded-2xl">
+                        <i class="fas fa-tags text-2xl text-white"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2 font-medium uppercase tracking-wide">Total Discount</h3>
+                <p class="text-3xl font-bold text-red-600 mb-1">₹{{ total_discount|floatformat:2 }}</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div class="bg-gradient-to-r from-red-500 to-red-600 h-2 rounded-full" style="width: 65%"></div>
+                </div>
+            </div>
+            
+            <div class="stats-card rounded-2xl shadow-lg p-6 text-center transition-all animate-bounce-in" style="--icon-color-1: #8b5cf6; --icon-color-2: #7c3aed; animation-delay: 0.3s;">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="icon-wrapper p-4 rounded-2xl">
+                        <i class="fas fa-chart-line text-2xl text-white"></i>
+                    </div>
+                </div>
+                <h3 class="text-sm text-gray-500 mb-2 font-medium uppercase tracking-wide">Net Sales</h3>
+                <p class="text-3xl font-bold text-purple-600 mb-1">₹{{ total_subtotal|floatformat:2 }}</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full" style="width: 78%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Analytics -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
+            <!-- Sales Chart -->
+            <div class="glass-card rounded-2xl shadow-xl p-8 animate-slide-up">
+                <h3 class="section-header text-xl font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-chart-line mr-2 text-blue-500"></i>Daily Sales Trend (Last 7 Days)
+                </h3>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Products -->
+            <div class="glass-card rounded-2xl shadow-xl p-8 animate-slide-up">
+                <h3 class="section-header text-xl font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-trophy mr-2 text-yellow-500"></i>Top Selling Products
+                </h3>
+                <div class="space-y-4 max-h-80 overflow-y-auto custom-scrollbar">
+                    {% for product in top_products %}
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-100 hover:shadow-md transition-all">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-900 mb-1">{{ product.product__product_name|truncatechars:30 }}</p>
+                            <p class="text-sm text-gray-500 flex items-center">
+                                <i class="fas fa-box mr-1"></i>
+                                {{ product.total_quantity }} units sold
+                            </p>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="font-bold text-green-600 text-lg">₹{{ product.total_revenue|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">No product data available</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coupon Usage and Revenue Breakdown -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-10">
+            <!-- Coupon Usage -->
+            <div class="glass-card rounded-2xl shadow-xl p-8 animate-slide-up">
+                <h3 class="section-header text-xl font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-ticket-alt mr-2 text-orange-500"></i>Top Coupon Usage
+                </h3>
+                <div class="space-y-4 max-h-80 overflow-y-auto custom-scrollbar">
+                    {% for coupon in coupon_usage %}
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-100 hover:shadow-md transition-all">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-900 mb-1">{{ coupon.coupon__code }}</p>
+                            <p class="text-sm text-gray-500 flex items-center">
+                                <i class="fas fa-users mr-1"></i>
+                                {{ coupon.usage_count }} time{{ coupon.usage_count|pluralize }}
+                            </p>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="font-bold text-red-600 text-lg">₹{{ coupon.total_discount|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-ticket-alt text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">No coupon usage data</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Revenue Breakdown -->
+            <div class="glass-card rounded-2xl shadow-xl p-8 animate-slide-up">
+                <h3 class="section-header text-xl font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-calculator mr-2 text-purple-500"></i>Revenue Breakdown
+                </h3>
+                <div class="space-y-6">
+                    <div class="metric-card p-4 rounded-xl" style="--accent-color: #3b82f6;">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 font-medium flex items-center">
+                                <i class="fas fa-receipt mr-2 text-blue-500"></i>
+                                Subtotal
+                            </span>
+                            <span class="font-bold text-xl text-gray-900">₹{{ total_subtotal|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card p-4 rounded-xl" style="--accent-color: #10b981;">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 font-medium flex items-center">
+                                <i class="fas fa-shipping-fast mr-2 text-green-500"></i>
+                                Shipping Charges
+                            </span>
+                            <span class="font-bold text-xl text-green-600">+₹{{ total_shipping|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card p-4 rounded-xl" style="--accent-color: #ef4444;">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 font-medium flex items-center">
+                                <i class="fas fa-percent mr-2 text-red-500"></i>
+                                Coupon Discounts
+                            </span>
+                            <span class="font-bold text-xl text-red-600">-₹{{ total_discount|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-gray-900 flex items-center">
+                                <i class="fas fa-coins mr-2 text-green-600"></i>
+                                Total Revenue
+                            </span>
+                            <span class="text-2xl font-bold text-green-600">₹{{ total_revenue|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders Table -->
+        <div class="glass-card rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-200">
+                <h3 class="section-header text-xl font-semibold text-gray-800">
+                    <i class="fas fa-list mr-2 text-indigo-500"></i>Recent Orders (Latest 20)
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gradient-to-r from-gray-100 to-blue-100">
+                        <tr>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-hashtag mr-1"></i>Order
+                            </th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-user mr-1"></i>Customer
+                            </th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-calendar mr-1"></i>Date
+                            </th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-money-bill mr-1"></i>Subtotal
+                            </th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-percent mr-1"></i>Discount
+                            </th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-coins mr-1"></i>Total
+                            </th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-ticket-alt mr-1"></i>Coupon
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for order in orders %}
+                        <tr class="table-row hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all">
+                            <td class="py-4 px-6 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ order.order_number }}</div>
+                            </td>
+                            <td class="py-4 px-6 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <div class="h-8 w-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
+                                            <span class="text-white text-xs font-bold">{{ order.user.full_name|first|upper }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ order.user.full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ order.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock mr-2 text-gray-400"></i>
+                                    {{ order.created_at|date:"M d, Y H:i" }}
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                ₹{{ order.subtotal|floatformat:2 }}
+                            </td>
+                            <td class="py-4 px-6 whitespace-nowrap text-sm font-semibold text-red-600">
+                                ₹{{ order.coupon_discount|floatformat:2 }}
+                            </td>
+                            <td class="py-4 px-6 whitespace-nowrap text-sm font-bold text-green-600">
+                                ₹{{ order.total_amount|floatformat:2 }}
+                            </td>
+                            <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-900">
+                                {% if order.coupon %}
+                                    <span class="status-badge bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
+                                        <i class="fas fa-tag mr-1"></i>
+                                        {{ order.coupon.code }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400 italic">None</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-16">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                                    <p class="text-gray-500 text-xl font-medium">No orders found for the selected period</p>
+                                    <p class="text-gray-400 text-sm mt-2">Try adjusting your filter criteria</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+    
+    <script>
+        function toggleCustomDates() {
+            const reportType = document.getElementById('report_type').value;
+            const customDates = document.getElementById('custom_dates');
+            
+            if (reportType === 'custom') {
+                customDates.style.display = 'flex';
+                customDates.classList.add('animate-slide-up');
+            } else {
+                customDates.style.display = 'none';
+            }
+        }
+
+        // Initialize chart
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveNavItem('reports');
+            
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const dailySalesData = {{ daily_sales|safe }};
+            
+            // Create gradient for the chart
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
+            
+            const orderGradient = ctx.createLinearGradient(0, 0, 0, 400);
+            orderGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+            orderGradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailySalesData.map(item => {
+                        const date = new Date(item.date);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }),
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: dailySalesData.map(item => item.revenue),
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#1d4ed8',
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 3
+                    }, {
+                        label: 'Orders',
+                        data: dailySalesData.map(item => item.orders),
+                        borderColor: '#10b981',
+                        backgroundColor: orderGradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        yAxisID: 'y1',
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#059669',
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 0) {
+                                        return 'Revenue: ₹' + context.parsed.y.toLocaleString();
+                                    } else {
+                                        return 'Orders: ' + context.parsed.y;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                },
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Orders',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            borderJoinStyle: 'round'
+                        }
+                    }
+                }
+            });
+            
+            // Add loading animation to stats cards
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+
+        function setActiveNavItem(currentPage) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            
+            const activeLink = document.querySelector(`[data-page="${currentPage}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+        }
+        
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Add intersection observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-slide-up');
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.glass-card').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+        }
+    </style>
+</body>
+</html>

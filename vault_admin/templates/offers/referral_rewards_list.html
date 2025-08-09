@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Rewards | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Messages Display -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Referral Rewards</h2>
+                    <p class="text-gray-600">Track all referral rewards and their status</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="{% url 'referral_offer_list' %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Referral Offers
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-gift text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Rewards</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_rewards }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Claimed Rewards</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ claimed_rewards }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-rupee-sign text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Value</p>
+                        <p class="text-2xl font-bold text-gray-900">₹{{ total_reward_value }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <form method="get" class="space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4">
+                <div class="flex-1">
+                    <label for="q" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" id="q" name="q" value="{{ query }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                           placeholder="Search by referrer or referred user...">
+                </div>
+                <div class="md:w-48">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="status" name="status"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                        <option value="claimed" {% if status_filter == 'claimed' %}selected{% endif %}>Claimed</option>
+                        <option value="unclaimed" {% if status_filter == 'unclaimed' %}selected{% endif %}>Unclaimed</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="btn-primaryy px-6 py-2 text-white font-semibold rounded-lg">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <a href="{% url 'referral_rewards_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold transition-all">
+                        <i class="fas fa-refresh mr-2"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Rewards Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referrer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Offer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reward</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for reward in rewards %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if reward.referrer.pro_image %}
+                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ reward.referrer.pro_image.url }}" alt="{{ reward.referrer.full_name }}">
+                                            {% else %}
+                                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                    <i class="fas fa-user text-gray-500"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ reward.referrer.full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ reward.referrer.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            {% if reward.referred_user.pro_image %}
+                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ reward.referred_user.pro_image.url }}" alt="{{ reward.referred_user.full_name }}">
+                                            {% else %}
+                                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                    <i class="fas fa-user text-gray-500"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ reward.referred_user.full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ reward.referred_user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ reward.referral_offer.offer_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ reward.referral_offer.reward_type|capfirst }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm">
+                                        {% if reward.coupon %}
+                                            <div class="font-medium text-green-600">{{ reward.coupon.code }}</div>
+                                            <div class="text-gray-500">
+                                                {{ reward.coupon.discount_value }}{% if reward.coupon.discount_type == 'percentage' %}%{% else %}₹{% endif %} OFF
+                                            </div>
+                                        {% else %}
+                                            <div class="font-medium text-blue-600">₹{{ reward.reward_amount }}</div>
+                                            <div class="text-gray-500">Cashback</div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if reward.is_claimed %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Claimed
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            Unclaimed
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ reward.created_at|date:"M d, Y H:i" }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center">
+                                    <div class="text-gray-500">
+                                        <i class="fas fa-gift text-4xl mb-4"></i>
+                                        <p class="text-lg font-medium">No referral rewards found</p>
+                                        <p class="text-sm">Referral rewards will appear here when users successfully refer others.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if rewards.has_other_pages %}
+                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        {% if rewards.has_previous %}
+                            <a href="?page={{ rewards.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </a>
+                        {% endif %}
+                        {% if rewards.has_next %}
+                            <a href="?page={{ rewards.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing <span class="font-medium">{{ rewards.start_index }}</span> to <span class="font-medium">{{ rewards.end_index }}</span> of <span class="font-medium">{{ rewards.paginator.count }}</span> results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                {% if rewards.has_previous %}
+                                    <a href="?page={{ rewards.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                {% endif %}
+                                
+                                {% for num in rewards.paginator.page_range %}
+                                    {% if rewards.number == num %}
+                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-navy text-sm font-medium text-white">
+                                            {{ num }}
+                                        </span>
+                                    {% else %}
+                                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                            {{ num }}
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if rewards.has_next %}
+                                    <a href="?page={{ rewards.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+    
+    <script>
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="offers"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Referral Offer | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Messages Display -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} mb-4 p-4 rounded-lg border-l-4 {% if message.tags == 'success' %}bg-green-50 border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-400 text-yellow-700{% else %}bg-blue-50 border-blue-400 text-blue-700{% endif %}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Edit Referral Offer</h2>
+                    <p class="text-gray-600">Update the referral reward program</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="{% url 'referral_offer_list' %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Referral Offers
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Referral Offer Form -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <form method="post" class="space-y-6" id="referralOfferForm">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Offer Name -->
+                        <div>
+                            <label for="offer_name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-handshake mr-2"></i>Offer Name *
+                            </label>
+                            <input type="text" id="offer_name" name="offer_name" value="{{ offer.offer_name }}" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                   placeholder="Enter offer name (e.g., Friend Referral Bonus)">
+                        </div>
+
+                        <!-- Reward Type -->
+                        <div>
+                            <label for="reward_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-gift mr-2"></i>Reward Type *
+                            </label>
+                            <select id="reward_type" name="reward_type" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                                <option value="coupon" {% if offer.reward_type == 'coupon' %}selected{% endif %}>Coupon</option>
+                                <option value="cashback" {% if offer.reward_type == 'cashback' %}selected{% endif %}>Cashback</option>
+                            </select>
+                        </div>
+
+                        <!-- Reward Value Type -->
+                        <div>
+                            <label for="reward_type_detail" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-calculator mr-2"></i>Reward Value Type *
+                            </label>
+                            <select id="reward_type_detail" name="reward_type_detail" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                                <option value="percentage" {% if offer.reward_type_detail == 'percentage' %}selected{% endif %}>Percentage</option>
+                                <option value="fixed" {% if offer.reward_type_detail == 'fixed' %}selected{% endif %}>Fixed Amount</option>
+                            </select>
+                        </div>
+
+                        <!-- Reward Value -->
+                        <div>
+                            <label for="reward_value" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-percent mr-2" id="reward-icon"></i>Reward Value *
+                            </label>
+                            <div class="relative">
+                                <input type="number" id="reward_value" name="reward_value" 
+                                       value="{{ offer.reward_value }}" required min="0.01" step="0.01"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent pr-12"
+                                       placeholder="0.00">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm" id="reward-suffix">%</span>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500" id="reward-help">Enter percentage value (e.g., 10 for 10%)</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Minimum Order Amount -->
+                        <div>
+                            <label for="minimum_order_amount" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-shopping-cart mr-2"></i>Minimum Order Amount (₹)
+                            </label>
+                            <input type="number" id="minimum_order_amount" name="minimum_order_amount" 
+                                   value="{{ offer.minimum_order_amount }}" min="0" step="0.01"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                   placeholder="0.00">
+                            <p class="mt-1 text-sm text-gray-500">Minimum order amount required to use the reward (0 for no minimum)</p>
+                        </div>
+
+                        <!-- Maximum Referrals -->
+                        <div>
+                            <label for="max_referrals" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-users mr-2"></i>Maximum Referrals per User
+                            </label>
+                            <input type="number" id="max_referrals" name="max_referrals" 
+                                   value="{{ offer.max_referrals|default:'' }}" min="1"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                   placeholder="Leave empty for unlimited">
+                            <p class="mt-1 text-sm text-gray-500">Maximum number of referrals per user (leave empty for unlimited)</p>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left mr-2"></i>Description
+                            </label>
+                            <textarea id="description" name="description" rows="4"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent"
+                                      placeholder="Enter offer description (optional)">{{ offer.description }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                    <button type="submit" class="btn-primaryy px-8 py-3 text-white font-semibold flex-1 sm:flex-none">
+                        <i class="fas fa-save mr-2"></i>Update Referral Offer
+                    </button>
+                    <a href="{% url 'referral_offer_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-all text-center flex-1 sm:flex-none">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+    
+    <script>
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="offers"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+
+            // Auto-hide messages after 5 seconds
+            const messages = document.querySelectorAll('.alert');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.transition = 'opacity 0.5s ease-out';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }, 5000);
+            });
+
+            // Update UI based on reward type detail
+            updateRewardUI();
+        });
+
+        // Update reward UI based on selection
+        function updateRewardUI() {
+            const rewardTypeDetail = document.getElementById('reward_type_detail').value;
+            const rewardIcon = document.getElementById('reward-icon');
+            const rewardSuffix = document.getElementById('reward-suffix');
+            const rewardHelp = document.getElementById('reward-help');
+            const rewardValue = document.getElementById('reward_value');
+
+            if (rewardTypeDetail === 'percentage') {
+                rewardIcon.className = 'fas fa-percent mr-2';
+                rewardSuffix.textContent = '%';
+                rewardHelp.textContent = 'Enter percentage value (e.g., 10 for 10%)';
+                rewardValue.max = '100';
+            } else {
+                rewardIcon.className = 'fas fa-rupee-sign mr-2';
+                rewardSuffix.textContent = '₹';
+                rewardHelp.textContent = 'Enter fixed amount in rupees (e.g., 100 for ₹100)';
+                rewardValue.removeAttribute('max');
+            }
+        }
+
+        // Event listener for reward type detail change
+        document.getElementById('reward_type_detail').addEventListener('change', updateRewardUI);
+
+        // Form validation
+        document.getElementById('referralOfferForm').addEventListener('submit', function(e) {
+            const rewardValue = parseFloat(document.getElementById('reward_value').value);
+            const rewardTypeDetail = document.getElementById('reward_type_detail').value;
+
+            if (rewardValue <= 0) {
+                e.preventDefault();
+                alert('Reward value must be greater than 0.');
+                return false;
+            }
+
+            if (rewardTypeDetail === 'percentage' && rewardValue > 100) {
+                e.preventDefault();
+                alert('Percentage reward cannot exceed 100%.');
+                return false;
+            }
+
+            const minOrderAmount = parseFloat(document.getElementById('minimum_order_amount').value);
+            if (minOrderAmount < 0) {
+                e.preventDefault();
+                alert('Minimum order amount cannot be negative.');
+                return false;
+            }
+
+            const maxReferrals = document.getElementById('max_referrals').value;
+            if (maxReferrals && parseInt(maxReferrals) <= 0) {
+                e.preventDefault();
+                alert('Maximum referrals must be greater than 0 or left empty for unlimited.');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

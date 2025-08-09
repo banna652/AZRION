@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if product.is_deleted %}Activate{% else %}Deactivate{% endif %} Product | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+    <style>
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        .btn-primaryy {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #16213e;
+            border: none;
+            border-radius: 12px;
+        }
+        .btn-primaryy::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .btn-primaryy:hover::before {
+            left: 100%;
+        }
+        .btn-primaryy:hover {
+            background: linear-gradient(135deg, rgb(51, 59, 82), rgb(39, 52, 87));
+            transform: translateY(-2px);
+        }
+        .sticky-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+        }
+        .sticky-sidebar {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            height: calc(100vh - 64px);
+            z-index: 30;
+        }
+        .main-content-with-nav {
+            margin-top: 64px;
+        }
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-content {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to { 
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">
+                        {% if product.is_deleted %}Activate Product{% else %}Deactivate Product{% endif %}
+                    </h2>
+                    <p class="text-gray-600">Confirm your action</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="{% url 'product_list' %}">
+                        <button class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Products
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Card -->
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Product Info Header -->
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center space-x-4">
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" alt="{{ product.product_name }}" 
+                                 class="w-16 h-16 object-cover rounded-lg border-2 border-gray-200">
+                        {% else %}
+                            <div class="w-16 h-16 bg-gray-200 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-xl"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">{{ product.product_name }}</h3>
+                            <p class="text-sm text-gray-600">{{ product.category.name }}</p>
+                            <p class="text-sm font-medium text-gray-900">₹{{ product.price }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirmation Content -->
+                <div class="px-6 py-8">
+                    <div class="text-center mb-8">
+                        {% if product.is_deleted %}
+                            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Activate Product</h3>
+                            <p class="text-sm text-gray-600">
+                                Are you sure you want to activate "<strong>{{ product.product_name }}</strong>"? 
+                                This product will be visible to customers and available for purchase.
+                            </p>
+                        {% else %}
+                            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                                <i class="fas fa-times-circle text-red-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Deactivate Product</h3>
+                            <p class="text-sm text-gray-600">
+                                Are you sure you want to deactivate "<strong>{{ product.product_name }}</strong>"? 
+                                This product will be hidden from customers and unavailable for purchase.
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h4 class="font-medium text-gray-900 mb-3">Product Details:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Category:</span>
+                                <span class="ml-2 font-medium">{{ product.category.name }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Price:</span>
+                                <span class="ml-2 font-medium">₹{{ product.price }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Offer:</span>
+                                <span class="ml-2 font-medium">
+                                    {% if product.product_offer > 0 %}
+                                        {{ product.product_offer }}% OFF
+                                    {% else %}
+                                        No Offer
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Images:</span>
+                                <span class="ml-2 font-medium">{{ product.images.count }} image{{ product.images.count|pluralize }}</span>
+                            </div>
+                            <div class="md:col-span-2">
+                                <span class="text-gray-600">Created:</span>
+                                <span class="ml-2 font-medium">{{ product.created_at|date:"M d, Y g:i A" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <form method="post" class="flex flex-col md:flex-row gap-4">
+                        {% csrf_token %}
+                        {% if product.is_deleted %}
+                            <input type="hidden" name="action" value="activate">
+                            <button type="submit" 
+                                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                                <i class="fas fa-check-circle mr-2"></i>Yes, Activate Product
+                            </button>
+                        {% else %}
+                            <input type="hidden" name="action" value="deactivate">
+                            <button type="submit" 
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-lg transition-all">
+                                <i class="fas fa-times-circle mr-2"></i>Yes, Deactivate Product
+                            </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'product_list' %}" 
+                           class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-all text-center">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'navigation_scripts.html' %}
+
+    <script>
+        // Set active navigation item
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-navy');
+                link.classList.add('hover:bg-navy');
+            });
+            const activeLink = document.querySelector('[data-page="products"]');
+            if (activeLink) {
+                activeLink.classList.add('bg-navy');
+                activeLink.classList.remove('hover:bg-navy');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% include 'style.html' %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .verification-container {
+            background: linear-gradient(135deg, rgba(22, 33, 62, 0.05) 0%, rgba(22, 33, 62, 0.1) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(22, 33, 62, 0.1);
+        }
+        
+        .otp-input {
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .otp-input:focus {
+            border-color: #16213e;
+            box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+            outline: none;
+        }
+        
+        .otp-input.filled {
+            border-color: #16213e;
+            background-color: rgba(22, 33, 62, 0.05);
+        }
+        
+        .resend-timer {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .resend-link {
+            color: #16213e;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .resend-link:hover {
+            color: #1e293b;
+        }
+        
+        .resend-link.disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    {% include 'navigation.html' %}
+
+    <div class="pt-20 min-h-screen flex items-center justify-center">
+        <div class="max-w-md w-full mx-4">
+            <div class="verification-container rounded-2xl p-8">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-[#16213e] rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-envelope text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Verify Your Email</h1>
+                    <p class="text-gray-600">
+                        We've sent a 6-digit verification code to<br>
+                        <span class="font-semibold text-[#16213e]">{{ email }}</span>
+                    </p>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                                {{ message }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- OTP Form -->
+                <form method="POST" id="otpForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-8">
+                        <label class="block text-sm font-semibold text-gray-700 mb-4 text-center">
+                            Enter Verification Code
+                        </label>
+                        <div class="flex justify-center gap-3">
+                            <input type="text" name="otp1" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" name="otp2" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" name="otp3" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" name="otp4" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" name="otp5" maxlength="1" class="otp-input" autocomplete="off">
+                            <input type="text" name="otp6" maxlength="1" class="otp-input" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full bg-[#16213e] text-white py-3 rounded-lg hover:bg-[#1e293b] transition-colors font-semibold mb-6">
+                        <i class="fas fa-check mr-2"></i>Verify Email
+                    </button>
+                </form>
+
+                <!-- Resend Section -->
+                <div class="text-center">
+                    <p class="text-gray-600 mb-2">Didn't receive the code?</p>
+                    <div id="resendSection">
+                        <span class="resend-timer">Resend in <span id="countdown">60</span> seconds</span>
+                    </div>
+                </div>
+
+                <!-- Back Link -->
+                <div class="text-center mt-6">
+                    <a href="{% url 'edit_profile' %}" class="text-gray-500 hover:text-gray-700 text-sm">
+                        <i class="fas fa-arrow-left mr-1"></i>Back to Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr style="background: #ffffff;">
+    {% include 'footer.html' %}
+
+    <script>
+        // OTP Input Handling
+        const otpInputs = document.querySelectorAll('.otp-input');
+        
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', function(e) {
+                const value = e.target.value;
+                
+                // Only allow numbers
+                if (!/^\d$/.test(value)) {
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Add filled class
+                if (value) {
+                    e.target.classList.add('filled');
+                } else {
+                    e.target.classList.remove('filled');
+                }
+                
+                // Move to next input
+                if (value && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+                
+                // Auto-submit when all fields are filled
+                if (index === otpInputs.length - 1 && value) {
+                    const allFilled = Array.from(otpInputs).every(input => input.value);
+                    if (allFilled) {
+                        document.getElementById('otpForm').submit();
+                    }
+                }
+            });
+            
+            input.addEventListener('keydown', function(e) {
+                // Handle backspace
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                    otpInputs[index - 1].value = '';
+                    otpInputs[index - 1].classList.remove('filled');
+                }
+                
+                // Handle paste
+                if (e.key === 'Enter') {
+                    document.getElementById('otpForm').submit();
+                }
+            });
+            
+            // Handle paste event
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text');
+                const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+                
+                digits.split('').forEach((digit, i) => {
+                    if (otpInputs[i]) {
+                        otpInputs[i].value = digit;
+                        otpInputs[i].classList.add('filled');
+                    }
+                });
+                
+                if (digits.length === 6) {
+                    document.getElementById('otpForm').submit();
+                }
+            });
+        });
+
+        // Countdown Timer
+        let countdown = 60;
+        const countdownElement = document.getElementById('countdown');
+        const resendSection = document.getElementById('resendSection');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                resendSection.innerHTML = `
+                    <form method="POST" action="{% url 'resend_profile_otp' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="resend-link">
+                            <i class="fas fa-redo mr-1"></i>Resend Code
+                        </button>
+                    </form>
+                `;
+            }
+        }, 1000);
+
+        // Focus first input on load
+        window.addEventListener('load', () => {
+            otpInputs[0].focus();
+        });
+    </script>
+</body>
+</html>
