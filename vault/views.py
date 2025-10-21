@@ -1728,6 +1728,17 @@ def place_order(request):
         shipping_charge = Decimal('50.00') if discounted_subtotal < 500 else Decimal('0.00')
         total_amount = float(discounted_subtotal) + float(shipping_charge)
         
+        if payment_method == 'wallet':
+            # Get or create wallet
+            wallet, created = Wallet.objects.get_or_create(user=request.user)
+            
+            # Check if wallet has sufficient balance
+            if wallet.balance < Decimal(str(total_amount)):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Insufficient wallet balance. Available: ₹{wallet.balance}, Required: ₹{total_amount:.2f}'
+                })
+        
         order_number = f"ORD{timezone.now().strftime('%Y%m%d%H%M%S')}{random.randint(100, 999)}"
         order = Order.objects.create(
             user=request.user,
@@ -1753,6 +1764,20 @@ def place_order(request):
             cart_item.variant.stock_quantity -= cart_item.quantity
             cart_item.variant.save()
         
+        if payment_method == 'wallet':
+            # Deduct amount from wallet
+            wallet = Wallet.objects.get(user=request.user)
+            if wallet.deduct_money(total_amount, f"Payment for Order #{order_number}"):
+                order.status = 'confirmed'  # Wallet payments are immediately confirmed
+                order.save()
+            else:
+                # This shouldn't happen as we already checked balance, but just in case
+                order.delete()  # Remove the order if wallet deduction fails
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Wallet payment failed. Please try again.'
+                })
+        
         # Mark coupon as used if applied
         if applied_coupon:
             applied_coupon.used_count += 1
@@ -1769,9 +1794,14 @@ def place_order(request):
         cart.applied_coupon = None
         cart.save()
         
+        if payment_method == 'wallet':
+            success_message = f'Order placed successfully using wallet! Remaining balance: ₹{wallet.balance:.2f}'
+        else:
+            success_message = 'Order placed successfully!'
+        
         return JsonResponse({
             'success': True,
-            'message': 'Order placed successfully!',
+            'message': success_message,
             'order_number': order_number,
             'order_id': order.id,
             'redirect_url': f'/order-success/{order.id}/'
@@ -2413,7 +2443,21 @@ def cancel_order(request, order_id):
         if order.can_be_cancelled():
             order.status = 'cancelled'
             order.save()
-            messages.success(request, f"Order {order.order_number} has been cancelled successfully.")
+            
+            if order.payment_method == 'online' and order.status != 'delivered':
+                # Get or create user's wallet
+                wallet, created = Wallet.objects.get_or_create(user=request.user)
+                
+                # Add refund amount to wallet
+                refund_amount = order.total_amount
+                wallet.add_money(
+                    amount=refund_amount,
+                    description=f"Refund for cancelled order #{order.order_number}"
+                )
+                
+                messages.success(request, f"Order {order.order_number} has been cancelled successfully. ₹{refund_amount} has been refunded to your wallet.")
+            else:
+                messages.success(request, f"Order {order.order_number} has been cancelled successfully.")
         else:
             messages.error(request, "This order cannot be cancelled.")
     
@@ -2741,6 +2785,22 @@ def cancel_order_item(request, item_id):
         # Restore stock
         order_item.variant.stock_quantity += order_item.quantity
         order_item.variant.save()
+        
+        if order_item.order.payment_method == 'online' and order_item.order.status != 'delivered':
+            # Get or create user's wallet
+            wallet, created = Wallet.objects.get_or_create(user=request.user)
+            
+            # Calculate refund amount for this item
+            refund_amount = order_item.get_total_price()
+            wallet.add_money(
+                amount=refund_amount,
+                description=f"Refund for cancelled item {order_item.product.product_name} from order #{order_item.order.order_number}"
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'{order_item.product.product_name} has been cancelled successfully. ₹{refund_amount} has been refunded to your wallet.'
+            })
         
         return JsonResponse({
             'success': True,
