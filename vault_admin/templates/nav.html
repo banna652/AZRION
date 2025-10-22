@@ -65,6 +65,13 @@
                         Coupons
                     </a>
                 </li>
+                <!-- Added Wallet Management link -->
+                <li>
+                    <a href="{% url 'wallet_management_page' %}" class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors" data-page="wallet">
+                        <i class="fas fa-wallet mr-3"></i>
+                        Wallet Management
+                    </a>
+                </li>
                 <li>
                     <div class="nav-link flex items-center p-3 text-white hover:bg-navy rounded-lg transition-colors cursor-pointer" onclick="toggleOffersMenu()" data-page="offers">
                         <i class="fas fa-percent mr-3"></i>
@@ -99,26 +106,27 @@
     <!-- Overlay for mobile -->
     <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"></div>
 
-    <script>
-        function toggleOffersMenu() {
+</div>
+
+<script>
+    function toggleOffersMenu() {
+        const submenu = document.getElementById('offers-submenu');
+        const chevron = document.getElementById('offers-chevron');
+        
+        submenu.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+
+    // Auto-expand offers menu if on offers page
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('offer') || currentPath.includes('referral')) {
             const submenu = document.getElementById('offers-submenu');
             const chevron = document.getElementById('offers-chevron');
-            
-            submenu.classList.toggle('hidden');
-            chevron.classList.toggle('rotate-180');
-        }
-
-        // Auto-expand offers menu if on offers page
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('offer') || currentPath.includes('referral')) {
-                const submenu = document.getElementById('offers-submenu');
-                const chevron = document.getElementById('offers-chevron');
-                if (submenu && chevron) {
-                    submenu.classList.remove('hidden');
-                    chevron.classList.add('rotate-180');
-                }
+            if (submenu && chevron) {
+                submenu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
             }
-        });
-    </script>
-</div>
+        }
+    });
+</script>

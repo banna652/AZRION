@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Management | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Wallet Management</h2>
+                    <p class="text-gray-600">Monitor and manage user wallet transactions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total Transactions Card -->
+            <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs text-gray-500 mb-1">Total Transactions</h3>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_transactions }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i class="fas fa-exchange-alt text-lg text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credit Transactions Card -->
+            <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs text-gray-500 mb-1">Credit Transactions</h3>
+                        <p class="text-2xl font-bold text-green-600">{{ credit_transactions }}</p>
+                        <p class="text-xs text-gray-500 mt-1">₹{{ total_credit_amount|floatformat:2 }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i class="fas fa-arrow-down text-lg text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debit Transactions Card -->
+            <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs text-gray-500 mb-1">Debit Transactions</h3>
+                        <p class="text-2xl font-bold text-red-600">{{ debit_transactions }}</p>
+                        <p class="text-xs text-gray-500 mt-1">₹{{ total_debit_amount|floatformat:2 }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-red-100">
+                        <i class="fas fa-arrow-up text-lg text-red-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Amount Card -->
+            <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs text-gray-500 mb-1">Net Amount</h3>
+                        <p class="text-2xl font-bold text-navy">₹{{ total_credit_amount|add:total_debit_amount|floatformat:2 }}</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-navy-dark">
+                        <i class="fas fa-wallet text-lg text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <form method="get" action="{% url 'wallet_management_page' %}" class="flex flex-col md:flex-row gap-4 flex-wrap">
+                <input type="text" name="q" placeholder="Search by user name, email, or description..." value="{{ query }}"
+                    class="flex-1 min-w-64 border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent" />
+                
+                <select name="type" class="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                    <option value="all" {% if transaction_type == 'all' %}selected{% endif %}>All Types</option>
+                    <option value="credit" {% if transaction_type == 'credit' %}selected{% endif %}>Credit</option>
+                    <option value="debit" {% if transaction_type == 'debit' %}selected{% endif %}>Debit</option>
+                </select>
+                
+                <select name="sort" class="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
+                    <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Newest First</option>
+                    <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Oldest First</option>
+                </select>
+                
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-all">
+                    <i class="fas fa-filter mr-2"></i>Apply Filters
+                </button>
+                
+                <button type="button" onclick="window.location.href='{% url 'wallet_management_page' %}'"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg transition-all">
+                    <i class="fas fa-times mr-2"></i>Clear All
+                </button>
+            </form>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                <i class="fas fa-hashtag mr-2"></i>Transaction ID
+                            </th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                <i class="fas fa-user mr-2"></i>User
+                            </th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                <i class="fas fa-calendar mr-2"></i>Date
+                            </th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                <i class="fas fa-exchange-alt mr-2"></i>Type
+                            </th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                <i class="fas fa-rupee-sign mr-2"></i>Amount
+                            </th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                                <i class="fas fa-info-circle mr-2"></i>Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr class="border-t hover:bg-gray-50 transition-colors">
+                            <td class="py-3 px-4 text-gray-800">
+                                <span class="font-mono text-sm">#{{ transaction.id }}</span>
+                            </td>
+                            <td class="py-3 px-4 text-gray-800">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user-circle text-gray-400 mr-2"></i>
+                                    <div>
+                                        <div class="text-sm font-medium">{{ transaction.wallet.user.full_name }}</div>
+                                        <div class="text-xs text-gray-500">{{ transaction.wallet.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-gray-800">
+                                <div class="flex items-center">
+                                    <i class="fas fa-calendar text-gray-400 mr-2"></i>
+                                    <div>
+                                        <div class="text-sm font-medium">{{ transaction.created_at|date:"M d, Y" }}</div>
+                                        <div class="text-xs text-gray-500">{{ transaction.created_at|date:"g:i A" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-gray-800">
+                                {% if transaction.transaction_type == 'credit' %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i class="fas fa-arrow-down mr-1"></i>Credit
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    <i class="fas fa-arrow-up mr-1"></i>Debit
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-gray-800">
+                                <span class="font-semibold {% if transaction.transaction_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {% if transaction.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <a href="{% url 'wallet_transaction_detail' transaction.id %}"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-all">
+                                    <i class="fas fa-eye mr-1"></i>View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-6 text-gray-500">
+                                <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                                <p>No transactions found.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if transactions.has_other_pages %}
+        <div class="flex justify-center mt-6">
+            <nav class="inline-flex rounded-md shadow-sm">
+                {% if transactions.has_previous %}
+                    <a href="?{% if query %}q={{ query }}&{% endif %}{% if transaction_type != 'all' %}type={{ transaction_type }}&{% endif %}{% if sort_order != 'desc' %}sort={{ sort_order }}&{% endif %}page={{ transactions.previous_page_number }}"
+                       class="px-3 py-2 bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-l-md">
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="px-3 py-2 bg-gray-100 border border-gray-300 text-sm font-medium text-gray-400 rounded-l-md">
+                        Previous
+                    </span>
+                {% endif %}
+
+                {% for num in transactions.paginator.page_range %}
+                    {% if transactions.number == num %}
+                        <span class="px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm font-semibold">
+                            {{ num }}
+                        </span>
+                    {% else %}
+                        <a href="?{% if query %}q={{ query }}&{% endif %}{% if transaction_type != 'all' %}type={{ transaction_type }}&{% endif %}{% if sort_order != 'desc' %}sort={{ sort_order }}&{% endif %}page={{ num }}"
+                           class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if transactions.has_next %}
+                    <a href="?{% if query %}q={{ query }}&{% endif %}{% if transaction_type != 'all' %}type={{ transaction_type }}&{% endif %}{% if sort_order != 'desc' %}sort={{ sort_order }}&{% endif %}page={{ transactions.next_page_number }}"
+                       class="px-3 py-2 bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-r-md">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="px-3 py-2 bg-gray-100 border border-gray-300 text-sm font-medium text-gray-400 rounded-r-md">
+                        Next
+                    </span>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+</body>
+</html>

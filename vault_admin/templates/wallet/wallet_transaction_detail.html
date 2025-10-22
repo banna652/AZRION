@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Details | AZRION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': '#16213e',
+                        'navy-dark': '#0f1729',
+                        'light-gray': '#f8f9fa',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    {% include 'nav_style.html' %}
+</head>
+<body class="bg-light-gray min-h-screen">
+    {% include 'nav.html' %}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8 md:ml-64">
+        <!-- Header Section -->
+        <div class="mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-navy mb-2">Transaction Details</h2>
+                    <p class="text-gray-600">View complete transaction information</p>
+                </div>
+                <a href="{% url 'wallet_management_page' %}" class="mt-4 md:mt-0 inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Wallet Management
+                </a>
+            </div>
+        </div>
+
+        <!-- Transaction Details Card -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Details -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-navy mb-6">
+                        <i class="fas fa-exchange-alt mr-2"></i>Transaction Information
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Transaction ID -->
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Transaction ID</label>
+                            <p class="text-lg font-mono text-gray-900 mt-1">#{{ transaction.id }}</p>
+                        </div>
+
+                        <!-- Transaction Type -->
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Transaction Type</label>
+                            <div class="mt-1">
+                                {% if transaction.transaction_type == 'credit' %}
+                                <span class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i class="fas fa-arrow-down mr-1"></i>Credit
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+                                    <i class="fas fa-arrow-up mr-1"></i>Debit
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Amount</label>
+                            <p class="text-2xl font-bold mt-1 {% if transaction.transaction_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if transaction.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ transaction.amount|floatformat:2 }}
+                            </p>
+                        </div>
+
+                        <!-- Date & Time -->
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Date & Time</label>
+                            <p class="text-lg text-gray-900 mt-1">{{ transaction.created_at|date:"M d, Y" }}</p>
+                            <p class="text-sm text-gray-500">{{ transaction.created_at|date:"g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <label class="text-sm text-gray-500 font-semibold">Description</label>
+                        <p class="text-gray-900 mt-2">{{ transaction.description|default:"No description provided" }}</p>
+                    </div>
+                </div>
+
+                <!-- Related Order (if available) -->
+                {% if related_order %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold text-navy mb-6">
+                        <i class="fas fa-box mr-2"></i>Related Order
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Order Number</label>
+                            <p class="text-lg font-mono text-gray-900 mt-1">{{ related_order.order_number }}</p>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Order Status</label>
+                            <p class="text-lg text-gray-900 mt-1">
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
+                                    {% if related_order.status == 'delivered' %}bg-green-100 text-green-800
+                                    {% elif related_order.status == 'cancelled' %}bg-red-100 text-red-800
+                                    {% elif related_order.status == 'returned' %}bg-orange-100 text-orange-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ related_order.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Order Total</label>
+                            <p class="text-lg font-bold text-gray-900 mt-1">₹{{ related_order.total_amount|floatformat:2 }}</p>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-gray-500 font-semibold">Order Date</label>
+                            <p class="text-lg text-gray-900 mt-1">{{ related_order.created_at|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'order_detail_view' related_order.id %}" class="mt-6 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all">
+                        <i class="fas fa-eye mr-2"></i>View Order Details
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- User Details Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6 sticky top-20">
+                    <h3 class="text-xl font-bold text-navy mb-6">
+                        <i class="fas fa-user mr-2"></i>User Details
+                    </h3>
+
+                    <div class="space-y-4">
+                        <!-- User Avatar -->
+                        <div class="text-center pb-4 border-b border-gray-200">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-3">
+                                <i class="fas fa-user text-2xl text-blue-600"></i>
+                            </div>
+                            <p class="text-lg font-bold text-gray-900">{{ user.full_name }}</p>
+                            <p class="text-sm text-gray-500">{{ user.email }}</p>
+                        </div>
+
+                        <!-- User Info -->
+                        <div>
+                            <label class="text-xs text-gray-500 font-semibold uppercase">Phone Number</label>
+                            <p class="text-gray-900 mt-1">{{ user.ph_number }}</p>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-gray-500 font-semibold uppercase">Account Status</label>
+                            <p class="mt-1">
+                                {% if user.is_active %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Active
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Blocked
+                                </span>
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-gray-500 font-semibold uppercase">Member Since</label>
+                            <p class="text-gray-900 mt-1">{{ user.created_at|date:"M d, Y" }}</p>
+                        </div>
+
+                        <!-- View User Wallet -->
+                        <a href="{% url 'user_wallet_detail' user.id %}" class="w-full mt-4 inline-flex items-center justify-center px-4 py-2 bg-navy hover:bg-navy-dark text-white rounded-lg transition-all">
+                            <i class="fas fa-wallet mr-2"></i>View User Wallet
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'navigation_scripts.html' %}
+</body>
+</html>
