@@ -96,7 +96,7 @@ def user_wallet_detail(request, user_id):
     context = {
         'user': user,
         'wallet': wallet,
-        'transaction': transactions,
+        'transactions': transactions,
     }
     
     return render(request, 'wallet/user_wallet_detail.html', context)
