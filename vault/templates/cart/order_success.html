@@ -15,13 +15,11 @@
         }
 
         .success-container {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            background: linear-gradient(135deg, #d1e6faff 0%, #a7caf3ff 100%);
             border-radius: 20px;
             padding: 3rem;
-            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
-            border: 1px solid #a7f3d0;
             text-align: center;
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
         }
 
@@ -71,12 +69,11 @@
         }
 
         .order-details-card {
-            background: white;
+            background: #e1fde7ff;
             border-radius: 15px;
             padding: 2rem;
             margin: 2rem 0;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e7eb;
         }
 
         .btn-primary {
@@ -168,9 +165,8 @@
         .order-info-item {
             text-align: center;
             padding: 1rem;
-            background: #f8fafc;
+            background: #c6fad0ff;
             border-radius: 10px;
-            border: 1px solid #e2e8f0;
         }
 
         .order-info-label {
@@ -278,26 +274,26 @@
             </p>
 
             <!-- Order Details Card -->
-            <div class="order-details-card">
+            <div class="order-details-card shadow-lg shadow-gray-400">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Details</h2>
                 
                 <div class="order-info-grid">
-                    <div class="order-info-item">
+                    <div class="order-info-item shadow-lg shadow-gray-400">
                         <div class="order-info-label">Order Number</div>
                         <div class="order-info-value">#{{ order.order_number }}</div>
                     </div>
                     
-                    <div class="order-info-item">
+                    <div class="order-info-item shadow-lg shadow-gray-400">
                         <div class="order-info-label">Total Amount</div>
                         <div class="order-info-value">₹{{ order.total_amount }}</div>
                     </div>
                     
-                    <div class="order-info-item">
+                    <div class="order-info-item shadow-lg shadow-gray-400">
                         <div class="order-info-label">Payment Method</div>
                         <div class="order-info-value">{{ order.get_payment_method_display }}</div>
                     </div>
                     
-                    <div class="order-info-item">
+                    <div class="order-info-item shadow-lg shadow-gray-400">
                         <div class="order-info-label">Order Status</div>
                         <div class="order-info-value">{{ order.get_status_display }}</div>
                     </div>

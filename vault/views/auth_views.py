@@ -29,7 +29,7 @@ def login_page(request):
         if not password:
             errors['password'] = "Password is required."
         elif user and not check_password(password, user.password):
-            errors['password'] = "Incorrect password."
+            errors['password'] = "Incorrect password!, please try again."
         
         if user and not user.is_active and not user.is_staff:
             errors['email'] = "Your account has been temporarily blocked. Please contact support."

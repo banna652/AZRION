@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
+from django.db import transaction
 import uuid
 import string
 import random
@@ -634,6 +635,24 @@ class OrderItem(models.Model):
                 not hasattr(self, 'return_request') and
                 timezone.now() <= self.order.created_at + timedelta(days=7))
 
+    def can_be_reviewed(self):
+        """Check if this item can be reviewed (order must be delivered and no review exists)"""
+        return (
+            self.status == 'active' and 
+            self.order.status == 'delivered' and
+            not ProductReview.objects.filter(
+                product=self.product,
+                user=self.order.user
+            ).exists()
+        )
+
+    def get_review(self):
+        """Get the review for this product if it exists"""
+        return ProductReview.objects.filter(
+            product=self.product,
+            user=self.order.user
+        ).first()
+
 class Wallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -646,28 +665,33 @@ class Wallet(models.Model):
     def add_money(self, amount, description=""):
         from decimal import Decimal
         amount = Decimal(str(amount))
-        self.balance += amount
-        self.save()
-        WalletTransaction.objects.create(
-            wallet=self,
-            transaction_type='credit',
-            amount=amount,
-            description=description
-        )
+        with transaction.atomic():
+            self.balance += amount
+            self.save()
+            WalletTransaction.objects.create(
+                wallet=self,
+                transaction_type='credit',
+                amount=amount,
+                description=description
+            )
+            # Refresh to ensure balance is up-to-date
+            self.refresh_from_db()
         return True
 
     def deduct_money(self, amount, description=""):
         from decimal import Decimal
         amount = Decimal(str(amount))
         if self.balance >= amount:
-            self.balance -= amount
-            self.save()
-            WalletTransaction.objects.create(
-                wallet=self,
-                transaction_type='debit',
-                amount=amount,
-                description=description
-            )
+            with transaction.atomic():
+                self.balance -= amount
+                self.save()
+                WalletTransaction.objects.create(
+                    wallet=self,
+                    transaction_type='debit',
+                    amount=amount,
+                    description=description
+                )
+                self.refresh_from_db()
             return True
         return False
 

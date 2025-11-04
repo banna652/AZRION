@@ -25,7 +25,7 @@ def user_orders(request):
     
     orders_qs = orders_qs.order_by('-created_at')
     
-    paginator = Paginator(orders_qs, 3)
+    paginator = Paginator(orders_qs, 5)
     page_number = request.GET.get('page', 1)
     try:
         orders = paginator.page(page_number)
@@ -56,8 +56,9 @@ def cancel_order(request, order_id):
             order.save()
             
             if order.payment_method == 'online' and order.status != 'delivered':
-                # Get or create user's wallet
                 wallet, created = Wallet.objects.get_or_create(user=request.user)
+                if created:
+                    wallet.refresh_from_db()
                 
                 # Add refund amount to wallet
                 refund_amount = order.total_amount
@@ -156,10 +157,10 @@ def place_order(request):
         discounted_subtotal = float(subtotal) - float(coupon_discount)
         shipping_charge = Decimal('50.00') if discounted_subtotal < 500 else Decimal('0.00')
         total_amount = float(discounted_subtotal) + float(shipping_charge)
-        
+        wallet, created = Wallet.objects.get_or_create(user=request.user)
         if payment_method == 'wallet':
             # Get or create wallet
-            wallet, created = Wallet.objects.get_or_create(user=request.user)
+            
             
             # Check if wallet has sufficient balance
             if wallet.balance < Decimal(str(total_amount)):
@@ -396,8 +397,9 @@ def cancel_order_item(request, item_id):
         order_item.variant.save()
         
         if order_item.order.payment_method == 'online' and order_item.order.status != 'delivered':
-            # Get or create user's wallet
             wallet, created = Wallet.objects.get_or_create(user=request.user)
+            if created:
+                wallet.refresh_from_db()
             
             # Calculate refund amount for this item
             refund_amount = order_item.get_total_price()
@@ -498,3 +500,126 @@ def request_item_return(request, item_id):
             'message': 'An error occurred while submitting return request.'
         })
         
+@never_cache
+@login_required
+@require_POST
+def add_product_review(request, product_id):
+    """Add or update a product review"""
+    if check_user_blocked(request.user):
+        return JsonResponse({
+            'success': False,
+            'message': 'Your account has been temporarily blocked.'
+        })
+    
+    try:
+        data = json.loads(request.body)
+        rating = data.get('rating')
+        review_text = data.get('review_text', '').strip()
+        
+        # Validate rating
+        if not rating or rating not in [1, 2, 3, 4, 5]:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please select a valid rating (1-5 stars).'
+            })
+        
+        # Validate review text
+        if not review_text:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please write a review.'
+            })
+        
+        if len(review_text) < 10:
+            return JsonResponse({
+                'success': False,
+                'message': 'Review must be at least 10 characters long.'
+            })
+        
+        if len(review_text) > 1000:
+            return JsonResponse({
+                'success': False,
+                'message': 'Review cannot exceed 1000 characters.'
+            })
+        
+        # Get the product
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Product not found.'
+            })
+        
+        # Check if user has purchased this product and it's delivered
+        has_delivered_order = OrderItem.objects.filter(
+            product=product,
+            order__user=request.user,
+            order__status='delivered',
+            status='active'
+        ).exists()
+        
+        if not has_delivered_order:
+            return JsonResponse({
+                'success': False,
+                'message': 'You can only review products from delivered orders.'
+            })
+        
+        # Create or update review
+        review, created = ProductReview.objects.update_or_create(
+            product=product,
+            user=request.user,
+            defaults={
+                'rating': rating,
+                'review_text': review_text,
+                'is_verified_purchase': True
+            }
+        )
+        
+        action = 'added' if created else 'updated'
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Review {action} successfully!',
+            'review': {
+                'id': review.id,
+                'rating': review.rating,
+                'review_text': review.review_text,
+                'created_at': review.created_at.strftime('%B %d, %Y')
+            }
+        })
+    
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request data.'
+        })
+    except Exception as e:
+        logger.error(f"Error adding review: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred while adding your review.'
+        })
+        
+@never_cache
+@login_required
+@require_GET
+def get_review(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Product not found.'})
+    
+    try:
+        review = ProductReview.objects.get(product=product, user=request.user)
+        return JsonResponse({
+            'success': True,
+            'review': {
+                'id': review.id,
+                'rating': review.rating,
+                'review_text': review.review_text,
+                'created_at': review.created_at.strftime('%B %d, %Y')
+            }
+        })
+    except ProductReview.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'No review found for this product.'})

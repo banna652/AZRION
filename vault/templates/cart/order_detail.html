@@ -221,6 +221,53 @@
             box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
         }
 
+        /* Review modal styles */
+        .review-modal-content {
+            text-align: left;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .star-rating .star {
+            cursor: pointer;
+            color: #d1d5db;
+            transition: all 0.2s ease;
+        }
+
+        .star-rating .star:hover,
+        .star-rating .star.active {
+            color: #fbbf24;
+            transform: scale(1.1);
+        }
+
+        .review-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .review-textarea:focus {
+            outline: none;
+            border-color: #16213e;
+            box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+        }
+
+        .char-count {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
         /* Custom alert styles */
         .custom-alert {
             position: fixed;
@@ -322,7 +369,7 @@
                                         
                                         <!-- Item Actions -->
                                         {% if item.status == 'active' %}
-                                        <div class="flex gap-2 mt-3">
+                                        <div class="flex gap-2 mt-3 flex-wrap">
                                             {% if item.can_be_cancelled %}
                                             <button type="button" onclick="showCancelItemModal('{{ item.id }}', '{{ item.product.product_name }}')"
                                                     class="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 transition-all">
@@ -336,6 +383,27 @@
                                                 <i class="fas fa-undo mr-1"></i>Return Item
                                             </button>
                                             {% endif %}
+                                            
+                                            <!-- Add review button for delivered items that can be reviewed -->
+                                            {% if item.can_be_reviewed %}
+                                            <button type="button" onclick="openReviewModal('{{ item.product.id }}', '{{ item.product.product_name }}')"
+                                                    class="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-200 transition-all">
+                                                <i class="fas fa-star mr-1"></i>Add Review
+                                            </button>
+                                            {% elif item.get_review %}
+                                            <button type="button" onclick="openReviewModal('{{ item.product.id }}', '{{ item.product.product_name }}', true)"
+                                                    class="text-sm bg-green-100 text-green-600 px-3 py-1 rounded hover:bg-green-200 transition-all">
+                                                <i class="fas fa-edit mr-1"></i>Edit Review
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                        <!-- Show review button for items that can be reviewed (delivered items) -->
+                                        {% elif item.can_be_reviewed %}
+                                        <div class="flex gap-2 mt-3 flex-wrap">
+                                            <button type="button" onclick="openReviewModal('{{ item.product.id }}', '{{ item.product.product_name }}')"
+                                                    class="text-sm bg-blue-100 text-blue-600 px-3 py-1 rounded hover:bg-blue-200 transition-all">
+                                                <i class="fas fa-star mr-1"></i>Add Review
+                                            </button>
                                         </div>
                                         {% elif item.return_request %}
                                         <div class="mt-3">
@@ -438,8 +506,55 @@
         </div>
     </div>
 
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal-overlay">
+        <div class="modal-content review-modal-content">
+            <h4>Add Product Review</h4>
+            <form id="reviewForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Product</label>
+                    <p id="reviewProductName" class="text-sm text-gray-600 bg-gray-50 p-2 rounded"></p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Rating <span class="text-red-500">*</span>
+                    </label>
+                    <div class="star-rating" id="starRating">
+                        <span class="star" data-rating="1"><i class="fas fa-star"></i></span>
+                        <span class="star" data-rating="2"><i class="fas fa-star"></i></span>
+                        <span class="star" data-rating="3"><i class="fas fa-star"></i></span>
+                        <span class="star" data-rating="4"><i class="fas fa-star"></i></span>
+                        <span class="star" data-rating="5"><i class="fas fa-star"></i></span>
+                    </div>
+                    <input type="hidden" id="reviewRating" name="rating" value="0">
+                </div>
+                <div class="mb-4">
+                    <label for="reviewText" class="block text-sm font-medium text-gray-700 mb-2">
+                        Your Review <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="reviewText" name="review_text" rows="4" required
+                              placeholder="Share your experience with this product (minimum 10 characters)..."
+                              class="review-textarea"></textarea>
+                    <div class="flex justify-between items-center">
+                        <p class="text-xs text-gray-500 mt-1">Minimum 10 characters required</p>
+                        <p class="char-count"><span id="charCount">0</span>/1000</p>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeReviewModal()" class="btn-secondary bg-gray-200 hover:bg-gray-300 text-[#16213e]">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let currentItemId = null;
+        let currentProductId = null;
+        let currentRating = 0;
 
         // Custom alert function
         function showCustomAlert(message, type = 'info') {
@@ -532,6 +647,90 @@
             currentItemId = null;
         }
 
+        function openReviewModal(productId, productName, isEdit = false) {
+            currentProductId = productId;
+            document.getElementById('reviewModal').classList.add('active');
+            document.getElementById('reviewProductName').textContent = productName;
+            document.getElementById('reviewText').value = '';
+            document.getElementById('reviewRating').value = '0';
+            currentRating = 0;
+            resetStars();
+            document.getElementById('charCount').textContent = '0';
+            if (isEdit) {
+                // Fetch existing review data and populate the form
+                fetch(`/get-review/${productId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('reviewText').value = data.review.review_text;
+                        currentRating = data.review.rating;
+                        updateStars();
+                    }
+                })
+                .catch(error => {
+                    showCustomAlert('An error occurred while fetching the review', 'error');
+                });
+            }
+            setTimeout(() => {
+                document.getElementById('reviewText').focus();
+            }, 300);
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.remove('active');
+            currentProductId = null;
+            currentRating = 0;
+        }
+
+        // Star rating functionality
+        document.querySelectorAll('#starRating .star').forEach(star => {
+            star.addEventListener('click', function() {
+                currentRating = this.dataset.rating;
+                document.getElementById('reviewRating').value = currentRating;
+                updateStars();
+            });
+
+            star.addEventListener('mouseover', function() {
+                const rating = this.dataset.rating;
+                document.querySelectorAll('#starRating .star').forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        document.getElementById('starRating').addEventListener('mouseleave', updateStars);
+
+        function updateStars() {
+            document.querySelectorAll('#starRating .star').forEach((star, index) => {
+                if (index < currentRating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function resetStars() {
+            document.querySelectorAll('#starRating .star').forEach(star => {
+                star.classList.remove('active');
+            });
+        }
+
+        // Character counter for review text
+        document.getElementById('reviewText').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
         // Close modals when clicking outside
         document.getElementById('cancelItemModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -542,6 +741,12 @@
         document.getElementById('returnItemModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeReturnItemModal();
+            }
+        });
+
+        document.getElementById('reviewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReviewModal();
             }
         });
 
@@ -591,6 +796,85 @@
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-undo mr-2"></i>Submit Return Request';
+            });
+        });
+
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const rating = parseInt(document.getElementById('reviewRating').value);
+            const reviewText = document.getElementById('reviewText').value.trim();
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            if (rating === 0) {
+                showCustomAlert('Please select a rating', 'error');
+                return;
+            }
+
+            if (!reviewText) {
+                showCustomAlert('Please write a review', 'error');
+                return;
+            }
+
+            if (reviewText.length < 10) {
+                showCustomAlert('Review must be at least 10 characters long', 'error');
+                return;
+            }
+
+            if (reviewText.length > 1000) {
+                showCustomAlert('Review cannot exceed 1000 characters', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+            const csrfTokenElement = document.querySelector('#reviewForm [name=csrfmiddlewaretoken]') || 
+                                     document.querySelector('[name=csrfmiddlewaretoken]');
+            const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
+
+            if (!csrfToken) {
+                showCustomAlert('Security token not found. Please refresh the page and try again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Review';
+                return;
+            }
+
+            fetch(`/add-review/${currentProductId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    rating: rating,
+                    review_text: reviewText
+                })
+            })
+            .then(response => {
+                console.log("[v0] Response status:", response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("[v0] Response data:", data);
+                if (data.success) {
+                    showCustomAlert(data.message, 'success');
+                    closeReviewModal();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showCustomAlert(data.message || 'An error occurred while adding your review', 'error');
+                }
+            })
+            .catch(error => {
+                console.error("[v0] Error:", error);
+                showCustomAlert('An error occurred while adding your review. Please try again.', 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Review';
             });
         });
     </script>

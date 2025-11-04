@@ -53,6 +53,8 @@
             text-align: center;
             transform: translateY(-20px);
             transition: transform 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-overlay.active .modal-content {
@@ -76,6 +78,7 @@
             display: flex;
             justify-content: center;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .btn-secondary {
@@ -124,6 +127,21 @@
             background: #c2410c;
         }
 
+        .btn-primary {
+            background: #16213e;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #0f1729;
+        }
+
         /* Return modal specific styles */
         .return-modal-content {
             text-align: left;
@@ -143,6 +161,54 @@
             outline: none;
             border-color: #16213e;
             box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+        }
+
+        /* Review modal specific styles */
+        .review-modal-content {
+            text-align: left;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .star-rating .star {
+            font-size: 2rem;
+            cursor: pointer;
+            color: #d1d5db;
+            transition: all 0.2s ease;
+        }
+
+        .star-rating .star:hover,
+        .star-rating .star.active {
+            color: #fbbf24;
+            transform: scale(1.1);
+        }
+
+        .review-modal-content textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .review-modal-content textarea:focus {
+            outline: none;
+            border-color: #16213e;
+            box-shadow: 0 0 0 3px rgba(22, 33, 62, 0.1);
+        }
+
+        .char-count {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
         }
 
         /* Custom alert styles */
@@ -187,6 +253,32 @@
         .status-active { background: #d1fae5; color: #065f46; }
         .status-cancelled { background: #fee2e2; color: #dc2626; }
         .status-returned { background: #f3e8ff; color: #7c3aed; }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .btn-secondary, .btn-danger, .btn-orange, .btn-primary {
+                width: 100%;
+            }
+
+            .star-rating .star {
+                font-size: 1.5rem;
+            }
+
+            .custom-alert {
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body class="bg-[#16213e] min-h-screen">
@@ -195,22 +287,22 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-navy mb-2">My Orders</h1>
+            <h1 class="text-3xl font-bold text-white mb-2">My Orders</h1>
             <p class="text-[#e3e9fe]">Track and manage your orders</p>
         </div>
 
         <!-- Search -->
         <div class="bg-[#e3e9fe] rounded-lg shadow-md p-6 mb-8">
-            <form method="get" class="flex items-center gap-4">
-                <div class="flex-1">
+            <form method="get" class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex-1 w-full">
                     <input type="text" name="q" value="{{ query }}" placeholder="Search by order number or product name..."
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-transparent">
                 </div>
-                <button type="submit" class="bg-navy hover:bg-navy-dark text-white px-6 py-2 rounded-lg transition-all">
+                <button type="submit" class="bg-navy hover:bg-navy-dark text-white px-6 py-2 rounded-lg transition-all w-full sm:w-auto">
                     <i class="fas fa-search mr-2"></i>Search
                 </button>
                 {% if query %}
-                <a href="{% url 'user_orders' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all">
+                <a href="{% url 'user_orders' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all w-full sm:w-auto text-center">
                     <i class="fas fa-times mr-2"></i>Clear
                 </a>
                 {% endif %}
@@ -223,7 +315,7 @@
             <div class="bg-[#f2f5ff] rounded-lg shadow-lg shadow-black overflow-hidden">
                 <!-- Order Header -->
                 <div class="bg-[#d7dfff] px-4 py-3 border-b">
-                    <div class="flex justify-between items-center">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <h3 class="text-lg font-semibold text-navy">Order #{{ order.order_number }}</h3>
                             <p class="text-sm text-gray-600">{{ order.created_at|date:"M d, Y" }} • ₹{{ order.total_amount|floatformat:0 }}</p>
@@ -264,7 +356,7 @@
                 <div class="px-4 py-3 bg-[#d7dfff]">
                     <div class="space-y-3">
                         {% for item in order.items.all %}
-                        <div class="flex items-center space-x-3 p-3 bg-white rounded-lg border">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-3 bg-white rounded-lg border">
                             {% if item.variant.images.first %}
                                 <img src="{{ item.variant.images.first.image.url }}" alt="{{ item.product.product_name }}"
                                      class="w-12 h-12 object-cover rounded-lg">
@@ -274,8 +366,8 @@
                                 </div>
                             {% endif %}
                             
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
+                            <div class="flex-1 w-full">
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                     <h4 class="text-sm font-medium text-gray-900">{{ item.product.product_name }}</h4>
                                     <span class="item-status-badge status-{{ item.status }}">{{ item.get_status_display }}</span>
                                 </div>
@@ -283,7 +375,7 @@
                                 
                                 <!-- Item Actions -->
                                 {% if item.status == 'active' %}
-                                <div class="flex gap-2 mt-2">
+                                <div class="flex flex-wrap gap-2 mt-2">
                                     {% if item.can_be_cancelled %}
                                     <button type="button" onclick="showCancelItemModal('{{ item.id }}', '{{ item.product.product_name }}')"
                                             class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded hover:bg-red-200 transition-all">
@@ -297,6 +389,19 @@
                                         <i class="fas fa-undo mr-1"></i>Return Item
                                     </button>
                                     {% endif %}
+
+                                    <!-- Add review button for delivered items -->
+                                    {% if item.can_be_reviewed %}
+                                    <button type="button" onclick="openReviewModal('{{ item.product.id }}', '{{ item.product.product_name }}')"
+                                            class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition-all">
+                                        <i class="fas fa-star mr-1"></i>Add Review
+                                    </button>
+                                    {% elif item.get_review %}
+                                    <button type="button" onclick="openReviewModal('{{ item.product.id }}', '{{ item.product.product_name }}', true)"
+                                            class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded hover:bg-green-200 transition-all">
+                                        <i class="fas fa-edit mr-1"></i>Edit Review
+                                    </button>
+                                    {% endif %}
                                 </div>
                                 {% elif item.return_request %}
                                 <div class="mt-2">
@@ -307,7 +412,7 @@
                                 {% endif %}
                             </div>
                             
-                            <div class="text-right">
+                            <div class="text-right w-full sm:w-auto">
                                 <p class="text-sm font-medium text-gray-900">₹{{ item.get_total_price|floatformat:0 }}</p>
                             </div>
                         </div>
@@ -317,9 +422,9 @@
 
                 <!-- Order Actions -->
                 <div class="bg-[#d7dfff] px-4 py-3 border-t">
-                    <div class="flex justify-between items-center">
-                        <div class="flex space-x-2">
-                            <a href="{% url 'order_detail' order.id %}" class="bg-navy hover:bg-navy-dark text-white px-3 py-1 rounded text-sm transition-all">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <a href="{% url 'order_detail' order.id %}" class="bg-navy hover:bg-navy-dark text-white px-3 py-1 rounded text-sm transition-all flex-1 sm:flex-none text-center">
                                 <i class="fas fa-eye mr-1"></i>Details
                             </a>
                         </div>
@@ -340,7 +445,7 @@
                         You haven't placed any orders yet.
                     {% endif %}
                 </p>
-                <a href="{% url 'product_list' %}" class="bg-navy hover:bg-navy-dark text-white px-6 py-3 rounded-lg transition-all">
+                <a href="{% url 'product_list' %}" class="bg-navy hover:bg-navy-dark text-white px-6 py-3 rounded-lg transition-all inline-block">
                     <i class="fas fa-shopping-cart mr-2"></i>Start Shopping
                 </a>
             </div>
@@ -349,7 +454,7 @@
 
         <!-- Pagination -->
         {% if orders.has_other_pages %}
-        <div class="flex justify-center mt-8">
+        <div class="flex justify-center mt-8 overflow-x-auto">
             <nav class="inline-flex rounded-md shadow-sm">
                 {% if orders.has_previous %}
                     <a href="?{% if query %}q={{ query }}&{% endif %}page={{ orders.previous_page_number }}"
@@ -365,7 +470,7 @@
                         </span>
                     {% else %}
                         <a href="?{% if query %}q={{ query }}&{% endif %}page={{ num }}"
-                           class="px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100">
+                           class="px-3 py-2 bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100">
                             {{ num }}
                         </a>
                     {% endif %}
@@ -425,12 +530,63 @@
             </form>
         </div>
     </div>
+
+    <!-- Add Product Review Modal -->
+    <div id="reviewModal" class="modal-overlay">
+        <div class="modal-content review-modal-content">
+            <h4>Write a Review</h4>
+            <form id="reviewForm">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Product</label>
+                    <p id="reviewProductName" class="text-sm text-gray-600 bg-gray-50 p-2 rounded"></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Rating <span class="text-red-500">*</span>
+                    </label>
+                    <div class="star-rating" id="starRating">
+                        <i class="fas fa-star star" data-rating="1"></i>
+                        <i class="fas fa-star star" data-rating="2"></i>
+                        <i class="fas fa-star star" data-rating="3"></i>
+                        <i class="fas fa-star star" data-rating="4"></i>
+                        <i class="fas fa-star star" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="selectedRating" name="rating" value="0">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="reviewText" class="block text-sm font-medium text-gray-700 mb-2">
+                        Your Review <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="reviewText" name="review_text" rows="5" required
+                              placeholder="Share your experience with this product (minimum 10 characters)..."
+                              maxlength="1000"></textarea>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">Minimum 10 characters required</p>
+                        <span class="char-count"><span id="charCount">0</span>/1000</span>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeReviewModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <hr style="background: #ffffff;">
 
     {% include 'footer.html' %}
 
     <script>
         let currentItemId = null;
+        let currentProductId = null;
+        let selectedRating = 0;
 
         // Custom alert function
         function showCustomAlert(message, type = 'info') {
@@ -523,6 +679,74 @@
             currentItemId = null;
         }
 
+        function openReviewModal(productId, productName, isEdit = false) {
+            currentProductId = productId;
+            document.getElementById('reviewModal').classList.add('active');
+            document.getElementById('reviewProductName').textContent = productName;
+            document.getElementById('reviewText').value = '';
+            document.getElementById('selectedRating').value = '0';
+            selectedRating = 0;
+            resetStars();
+            document.getElementById('charCount').textContent = '0';
+            
+            setTimeout(() => {
+                document.getElementById('reviewText').focus();
+            }, 300);
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.remove('active');
+            currentProductId = null;
+            selectedRating = 0;
+        }
+
+        function resetStars() {
+            document.querySelectorAll('#starRating .star').forEach(star => {
+                star.classList.remove('active');
+            });
+        }
+
+        // Star rating functionality
+        document.querySelectorAll('#starRating .star').forEach(star => {
+            star.addEventListener('click', function() {
+                selectedRating = this.dataset.rating;
+                document.getElementById('selectedRating').value = selectedRating;
+                
+                document.querySelectorAll('#starRating .star').forEach(s => {
+                    if (s.dataset.rating <= selectedRating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+            });
+
+            star.addEventListener('mouseover', function() {
+                document.querySelectorAll('#starRating .star').forEach(s => {
+                    if (s.dataset.rating <= this.dataset.rating) {
+                        s.style.color = '#fbbf24';
+                    } else {
+                        s.style.color = '#d1d5db';
+                    }
+                });
+            });
+        });
+
+        document.getElementById('starRating').addEventListener('mouseout', function() {
+            document.querySelectorAll('#starRating .star').forEach(star => {
+                if (star.dataset.rating <= selectedRating) {
+                    star.style.color = '#fbbf24';
+                } else {
+                    star.style.color = '#d1d5db';
+                }
+            });
+        });
+
+        // Character count for review text
+        document.getElementById('reviewText').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
         // Close modals when clicking outside
         document.getElementById('cancelItemModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -533,6 +757,12 @@
         document.getElementById('returnItemModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeReturnItemModal();
+            }
+        });
+
+        document.getElementById('reviewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReviewModal();
             }
         });
 
@@ -582,6 +812,64 @@
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-undo mr-2"></i>Submit Return Request';
+            });
+        });
+
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const rating = parseInt(document.getElementById('selectedRating').value);
+            const reviewText = document.getElementById('reviewText').value.trim();
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const csrfToken = document.querySelector('#reviewForm [name="csrfmiddlewaretoken"]').value;
+
+            if (!rating || rating < 1 || rating > 5) {
+                showCustomAlert('Please select a rating (1-5 stars)', 'error');
+                return;
+            }
+
+            if (!reviewText) {
+                showCustomAlert('Please write a review', 'error');
+                return;
+            }
+
+            if (reviewText.length < 10) {
+                showCustomAlert('Review must be at least 10 characters long', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+            fetch(`/add-review/${currentProductId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    rating: rating,
+                    review_text: reviewText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("[v0] Review response:", data);
+                if (data.success) {
+                    showCustomAlert(data.message, 'success');
+                    closeReviewModal();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showCustomAlert(data.message || 'An error occurred', 'error');
+                }
+            })
+            .catch(error => {
+                console.log("[v0] Review error:", error);
+                showCustomAlert('An error occurred while submitting your review', 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Review';
             });
         });
     </script>

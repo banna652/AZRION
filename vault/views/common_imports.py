@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
-from ..models import User, Category, Product, Address, Order, Cart, CartItem, Wishlist, WishlistItem, OrderItem, ProductVariant, ReturnRequest, ItemReturnRequest, CouponUsage, Coupon, ReferralReward, ReferralOffer, Wallet, WalletTransaction
+from ..models import User, Category, Product, Address, Order, Cart, CartItem, Wishlist, WishlistItem, OrderItem, ProductVariant, ReturnRequest, ItemReturnRequest, CouponUsage, Coupon, ReferralReward, ReferralOffer, Wallet, WalletTransaction, ProductReview
 from django.db.models import Q
 from django.db import models
 from django.urls import reverse
@@ -18,7 +18,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import random
 import re
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.template.loader import get_template
 from io import BytesIO
 from xhtml2pdf import pisa

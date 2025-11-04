@@ -73,4 +73,7 @@ urlpatterns = [
     
     path('wallet/', wallet_view, name='wallet_view'),
     path('generate-referral-link/', generate_referral_link, name='generate_referral_link'),
+    
+    path('add-review/<int:product_id>/', add_product_review, name='add_product_review'),
+    path('get-review/<int:product_id>/', get_review, name='get_review'),
 ]
