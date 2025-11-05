@@ -31,7 +31,8 @@ import hashlib
 import logging
 from decimal import Decimal
 from datetime import timedelta
-from zoneinfo import ZoneInfo 
+from zoneinfo import ZoneInfo
+from django.conf.urls import handler404
 
 
 logger = logging.getLogger(__name__)
