@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
+    <title>500 - Server Error</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -35,20 +35,20 @@
             
             <!-- Error code -->
             <div class="mb-6 md:mb-8">
-                <div class="error-code text-gray-900">404</div>
+                <div class="error-code text-gray-900">500</div>
             </div>
 
             <!-- Error title -->
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Page Not Found
+                Server Error
             </h1>
 
             <!-- Error description -->
             <p class="text-lg text-gray-600 mb-2 leading-relaxed">
-                The page you're looking for doesn't exist.
+                Something went wrong on our end.
             </p>
             <p class="text-gray-500 text-base mb-8">
-                It may have been moved or deleted. Please check the URL and try again.
+                We're working to fix the issue. Please try again later.
             </p>
 
             <!-- Action buttons -->
@@ -56,8 +56,8 @@
                 <button onclick="goHome()" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto">
                     Go Home
                 </button>
-                <button onclick="goBack()" class="px-6 py-2.5 bg-gray-100 text-gray-900 font-medium rounded-lg hover:bg-gray-200 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 w-full sm:w-auto">
-                    Go Back
+                <button onclick="retryPage()" class="px-6 py-2.5 bg-gray-100 text-gray-900 font-medium rounded-lg hover:bg-gray-200 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 w-full sm:w-auto">
+                    Try Again
                 </button>
             </div>
 
@@ -76,10 +76,11 @@
             window.location.href = '/';
         }
 
-        function goBack() {
-            window.history.back();
+        function retryPage() {
+            window.location.reload();
         }
     </script>
 
 </body>
 </html>
+
