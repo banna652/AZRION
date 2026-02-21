@@ -73,7 +73,7 @@ This project focuses on:
 - HTML5
 - CSS3
 - JavaScript
-- Bootstrap
+- Tailwind CSS
 
 ---
 
